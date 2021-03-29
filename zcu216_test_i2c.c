@@ -81,5 +81,8 @@ int main() {
   }
   printf("should be programmed...\n");
 
+  close_i2c_dev(I2C_DEV_EEPROM);
+  close_i2c_dev(I2C_DEV_8A34001);
+
   return 0;
 }

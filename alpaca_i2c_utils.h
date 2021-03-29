@@ -24,7 +24,7 @@ typedef struct i2c_slave {
 
 #elif PLATFORM == HTG49DR
   #define PLATFORM_I2C_DEVICES \
-    X(I2C_DEV_LMK_SPI_BRIDGE, DEVICE_STRCUT("/dev/i2c-2", 0x71, (1 << 0), 0x2e, -1)) \
+    X(I2C_DEV_LMK_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-2", 0x71, (1 << 0), 0x2e, -1)) \
     X(I2C_DEV_LMX_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-6", 0x71, (1 << 4), 0x2a, -1)) \
     X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-5", 0x71, (1 << 3), 0x20, -1)) \
 
@@ -38,6 +38,7 @@ typedef enum dev { I2C_DEVICES_MAP } I2CDev;
 
 int init_i2c_bus();
 int init_i2c_dev(I2CDev dev);
+int close_i2c_dev(I2CDev dev);
 int i2c_write(I2CDev dev, uint8_t *buf, uint16_t len);
 int i2c_read(I2CDev dev, uint8_t *buf, uint16_t len);
 int i2c_read_regs(I2CDev dev, uint8_t *offset, uint16_t olen, uint8_t *buf, uint16_t len);

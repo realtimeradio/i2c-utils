@@ -135,6 +135,16 @@ int init_i2c_dev(I2CDev dev) {
   return SUCCESS;
 }
 
+int close_i2c_dev(I2CDev dev) {
+  I2CSlave* i2c_devptr = &i2c_devs[dev];
+
+  if (i2c_devptr->fd > 0) {
+    close(i2c_devptr->fd);
+  }
+
+  return SUCCESS;
+}
+
 int i2c_write(I2CDev dev, uint8_t *buf, uint16_t len) {
   uint8_t curmux = 0;
   int i;
