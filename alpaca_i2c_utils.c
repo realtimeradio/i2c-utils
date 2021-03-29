@@ -24,12 +24,9 @@ int fd_i2c1;
 #define SUCCESS 1
 #define FAILURE 0
 
-static I2CSlave i2c_devs[] = {
-  { "/dev/i2c-6" , 0x74, (1 << 0), 0x54, -1 }, // eeprom
-  { "/dev/i2c-10", 0x74, (1 << 4), 0x5b, -1 }, // 8a34001
-  { "/dev/i2c-20", 0x75, (1 << 7), 0x50, -1 }, // SFP0 Socket, A0h SFF-8472 memory space
-  { "/dev/i2c-20", 0x75, (1 << 7), 0x51, -1 }  // SFP0 Module, A2h SFF-8472 memory space
-};
+#define X(name, dev) dev,
+static I2CSlave i2c_devs[] = { I2C_DEVICES_MAP };
+#undef X
 
 int i2c_write_bus(int fd, uint8_t addr, uint8_t *buf, uint16_t len) {
   int ret = SUCCESS;
