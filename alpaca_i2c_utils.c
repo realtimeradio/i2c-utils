@@ -83,22 +83,17 @@ int i2c_read_regs_bus(int fd, uint8_t addr, uint8_t *offset, uint16_t olen, uint
 }
 
 int i2c_set_mux(I2CSlave *dev_ptr) {
-   /*
-   * This method is hard coded to set the mux on i2c bus 1 if these utils were
-   * to extend to be bus agnostic we would need to be able to resolve the slave
-   * device with the parent bus (e.g., /dev/i2c-6 lives on bus 1, /dev/i2c-1
-   */
   int ret = SUCCESS; 
    /*
-   * I2C bus 1 on the zcu216 has two muxes, one at 0x74 and one at 0x75. Would
-   * it be necesary to disable the mux that is not of interest as to not send data
-   * on that mux? I think the answer would be yes if there were addr collisions.
-   * In this case the only device with a collision is si570 both having 0x5d but
-   * with that clock not used it isn't an issue right now.
+   * i2c bus 1 on the zcu216 has two muxes, one at 0x74 and one at 0x75. Would
+   * it be necesary to disable the mux that is not of interest (first writing a
+   * packet to that mux configuring it as to not send data on that mux? I think
+   * the answer would be yes if there were addr collisions.  In this case the
+   * only device with a collision is si570 both having 0x5d but with that clock
+   * not used it isn't an issue right now.
    */
-  // TODO same i2c parent bus problem
-  //ret = i2c_write_bus(fd_i2c1, dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
-  ret = i2c_write_bus(fd_i2c0, dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
+
+  ret = i2c_write_bus(*(dev_ptr->parent_fd), dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
   if (ret == FAILURE) {
     return ret;
   }
@@ -107,9 +102,8 @@ int i2c_set_mux(I2CSlave *dev_ptr) {
 
 int i2c_get_mux(I2CSlave *dev_ptr, uint8_t *buf) {
   int ret = SUCCESS;
-  // TODO same i2c parent bus problem
-  //ret = i2c_read_bus(fd_i2c1, dev_ptr->mux_addr, buf, 1);
-  ret = i2c_read_bus(fd_i2c0, dev_ptr->mux_addr, buf, 1);
+
+  ret = i2c_read_bus(*(dev_ptr->parent_fd), dev_ptr->mux_addr, buf, 1);
   if (ret == FAILURE) {
     return ret;
   }
