@@ -83,6 +83,7 @@ int main() {
 
   close_i2c_dev(I2C_DEV_EEPROM);
   close_i2c_dev(I2C_DEV_8A34001);
+  close_i2c_bus();
 
   return 0;
 }

@@ -37,6 +37,7 @@ typedef enum dev { I2C_DEVICES_MAP } I2CDev;
 #undef X
 
 int init_i2c_bus();
+int close_i2c_bus();
 int init_i2c_dev(I2CDev dev);
 int close_i2c_dev(I2CDev dev);
 int i2c_write(I2CDev dev, uint8_t *buf, uint16_t len);

@@ -96,7 +96,9 @@ int i2c_set_mux(I2CSlave *dev_ptr) {
    * In this case the only device with a collision is si570 both having 0x5d but
    * with that clock not used it isn't an issue right now.
    */
-  ret = i2c_write_bus(fd_i2c1, dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
+  // TODO same i2c parent bus problem
+  //ret = i2c_write_bus(fd_i2c1, dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
+  ret = i2c_write_bus(fd_i2c0, dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
   if (ret == FAILURE) {
     return ret;
   }
@@ -105,7 +107,9 @@ int i2c_set_mux(I2CSlave *dev_ptr) {
 
 int i2c_get_mux(I2CSlave *dev_ptr, uint8_t *buf) {
   int ret = SUCCESS;
-  ret = i2c_read_bus(fd_i2c1, dev_ptr->mux_addr, buf, 1);
+  // TODO same i2c parent bus problem
+  //ret = i2c_read_bus(fd_i2c1, dev_ptr->mux_addr, buf, 1);
+  ret = i2c_read_bus(fd_i2c0, dev_ptr->mux_addr, buf, 1);
   if (ret == FAILURE) {
     return ret;
   }
@@ -114,13 +118,32 @@ int i2c_get_mux(I2CSlave *dev_ptr, uint8_t *buf) {
 
 int init_i2c_bus() {
   // initialize i2c buses
-  // TODO: initialize both buses or determine how to indicate which to open
-  // based on the device
+
+  // TODO: Most MPSOC designs enable both I2C buses, but this may not be the
+  // case, probably a smarter way to to initialize a bus of interest
   fd_i2c1 = open(I2C1_DEV_PATH, O_RDWR);
   if (fd_i2c1 < 0) {
-    printf("ERROR: opening I2C bus 1\n");
+    printf("ERROR: could not open I2C bus 1\n");
     return FAILURE;
   }
+
+  fd_i2c0 = open(I2C0_DEV_PATH, O_RDWR);
+  if (fd_i2c0 < 0) {
+    printf("ERROR: could not open I2C bus 0\n");
+    return FAILURE;
+  }
+  return SUCCESS;
+}
+
+int close_i2c_bus() {
+  if (fd_i2c1 > 0) {
+    close(fd_i2c1);
+  }
+
+  if (fd_i2c0 > 0) {
+    close(fd_i2c0);
+  }
+
   return SUCCESS;
 }
 
@@ -193,14 +216,14 @@ int i2c_read(I2CDev dev, uint8_t *buf, uint16_t len) {
       break;
     } else {
       // delay and attempt again
-      printf("WARNINC: mux status changed during transaction\n");
+      printf("WARNING: mux status changed during transaction\n");
       usleep(DELAY_100us*(i+1));
     }
   }
   if (i < NUM_I2C_RETRIES) {
     return SUCCESS;
   } else {
-    printf("ERROR: could not write, reached number of retries...\n");
+    printf("ERROR: could not read, reached number of retries...\n");
     return FAILURE;
   }
 }
@@ -218,7 +241,7 @@ int i2c_read_regs(I2CDev dev, uint8_t *offset, uint16_t olen, uint8_t *buf, uint
     }
     // write
     if (FAILURE==i2c_read_regs_bus(dev_ptr->fd, dev_ptr->slave_addr, offset, olen, buf, len)) {
-      printf("could not run low level i2c_read_regs()\n");
+      printf("could not run low level i2c_read_regs() %d\n", i);
       continue;
     }
     // read switch status
@@ -232,16 +255,15 @@ int i2c_read_regs(I2CDev dev, uint8_t *offset, uint16_t olen, uint8_t *buf, uint
       printf("read successful\n");
       break;
     } else {
-      printf("curmux = %x, mux_sel=%x\n", curmux, dev_ptr->mux_sel);
       // delay and attempt again
-      printf("warn: i2c1 mux status change\n");
+      printf("WARNING: mux status changed during transaction\n");
       usleep(DELAY_100us*(i+1));
     }
   }
   if (i < NUM_I2C_RETRIES) {
     return SUCCESS;
   } else {
-    printf("error could not write, reached number of retries...\n");
+    printf("ERROR: could not read, reached number of retries...\n");
     return FAILURE;
   }
 }
