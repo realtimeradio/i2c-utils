@@ -11,7 +11,7 @@ typedef struct i2c_slave {
   int* parent_fd;            // parent i2c bus that the mux-ed slave lives on, fd_i2c0 or fd_i2c1
 } I2CSlave;
 
-#define PLATFORM HTG49DR // ZCU216
+#define PLATFORM ZCU216
 
 #define ZCU216  0
 #define HTG49DR 1
@@ -19,6 +19,7 @@ typedef struct i2c_slave {
 #if PLATFORM == ZCU216
   #define PLATFORM_I2C_DEVICES \
     X(I2C_DEV_EEPROM,  DEVICE_STRUCT("/dev/i2c-6" , 0x74, (1 << 0), 0x54, -1, &fd_i2c1)) /* Device EEPROM */ \
+    X(I2C_DEV_CLK104,  DEVICE_STRUCT("/dev/i2c-11", 0x74, (1 << 5), 0x2f, -1, &fd_i2c1)) /* CLK104 */ \
     X(I2C_DEV_8A34001, DEVICE_STRUCT("/dev/i2c-10", 0x74, (1 << 4), 0x5b, -1, &fd_i2c1)) /* IDT 8A34001 Transceiver clock chip */ \
     X(I2C_DEV_SFP0,    DEVICE_STRUCT("/dev/i2c-20", 0x75, (1 << 7), 0x50, -1, &fd_i2c1)) /* SFP0 Socket, A0h SFF-8472 memory space */ \
     X(I2C_DEV_SFP0_MOD,DEVICE_STRUCT("/dev/i2c-20", 0x75, (1 << 7), 0x51, -1, &fd_i2c1)) /* SFP0 Module, A2h SFF-8472 memory space */ \
