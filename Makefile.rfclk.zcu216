@@ -1,0 +1,17 @@
+APP = i2c-utils
+APPSOURCES= alpaca_i2c_utils.c alpaca_zcu216_rfclks.c
+OUTS = /tftpboot/nfs/rootfs/home/casper/zcu216_test_alpaca_rfclks
+SRCS = alpaca_i2c_utils.c alpaca_zcu216_rfclks.c
+INCLUDES =
+LIBDIR =
+BOARD_FLAG =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
