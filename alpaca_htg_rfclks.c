@@ -105,11 +105,7 @@ int main() {
     reg_read[0] = 0x0;
     reg_read[1] = 0x0;
     reg_read[2] = 0x0;
-    // the read is implmented in two stages using these base methods instead of
-    // the i2c_read_regs() method `I think` because we are working with a SPI to
-    // I2C translation and so we use the bridge to write something out and then
-    // read from the buffer of the device. The device doesn't understand a
-    // repeated start
+
     if (0==i2c_write(I2C_DEV_LMX_SPI_BRIDGE, tx_read, 4)) {
       printf("error writing reg to read\n");
       return 0;

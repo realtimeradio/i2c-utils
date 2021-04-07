@@ -194,11 +194,7 @@ int main() {
     lmk_reg_read[0] = 0x0;
     lmk_reg_read[1] = 0x0;
     lmk_reg_read[2] = 0x0;
-    // the read is implmented in two stages using these base methods instead of
-    // the i2c_read_regs() method `I think` because we are working with a SPI to
-    // I2C translation and so we use the bridge to write something out and then
-    // read from the buffer of the device. The device doesn't understand a
-    // repeated start
+
     if (0==i2c_write(I2C_DEV_CLK104, lmk_tx_read, 4)) {
       printf("error writing reg to read\n");
       return 0;
@@ -228,73 +224,69 @@ int main() {
   }
   printf("\n");
  /**********************************************************************/
- // printf("\nReading LMX2594 register config\n");
+  printf("\nReading LMX2594 register config\n");
   ret = set_sdo_mux(LMX_ADC_MUX_SEL);
   if (ret == 0) {
     printf("gpio sdo mux not set correctly\n");
     return 0;
   }
 
- // // the boards I have used all use LMX2594 so read/write are the same
- // // reading the lmx is going to be anti-climactic though because for my design
- // // I power them down... but at least I can check config
- // //
- // // set MUX_OUT_LD_SEL of lmx register R0 for readback
- // uint8_t R0[4];
- // format_rfclk_pkt(LMX_ADC_SDO_SS, 0x00002418, R0);
- // if(0==i2c_write(I2C_DEV_CLK104, R0, 4)) {
- //   printf("error setting R0 register for readback\n");
- //   return 0;
- // }
+  // set MUX_OUT_LD_SEL of lmx register R0 for readback
+  uint8_t R0[4];
+  format_rfclk_pkt(LMX_ADC_SDO_SS, 0x00002418, R0);
+  if(0==i2c_write(I2C_DEV_CLK104, R0, 4)) {
+    printf("error setting R0 register for readback\n");
+    return 0;
+  }
 
- // uint32_t lmx_config_data[256];
- // uint32_t* lmx_cd = lmx_config_data;
+  uint32_t lmx_config_data[256];
+  uint32_t* lmx_cd = lmx_config_data;
 
- // uint8_t reg_read[3] = {0x0, 0x0, 0x0};
- // uint8_t tx_read[4] = {0x0, 0x0, 0x0, 0x0};
- // for (int i=0; i<113; i++, lmx_cd++) { //113 registers in LMX
- //   tx_read[0] = SELECT_SPI_SDO(LMX_ADC_SDO_SS);
- //   tx_read[1] = (i | LMX_RW_BIT);
+  uint8_t reg_read[3] = {0x0, 0x0, 0x0};
+  uint8_t tx_read[4] = {0x0, 0x0, 0x0, 0x0};
+  for (int i=0; i<113; i++, lmx_cd++) { //113 registers in LMX
+    tx_read[0] = SELECT_SPI_SDO(LMX_ADC_SDO_SS);
+    tx_read[1] = (i | LMX_RW_BIT);
 
- //   reg_read[0] = 0x0;
- //   reg_read[1] = 0x0;
- //   reg_read[2] = 0x0;
- //   // the read is implmented in two stages using these base methods instead of
- //   // the i2c_read_regs() method `I think` because we are working with a SPI to
- //   // I2C translation and so we use the bridge to write something out and then
- //   // read from the buffer of the device. The device doesn't understand a
- //   // repeated start
- //   if (0==i2c_write(I2C_DEV_CLK104, tx_read, 4)) {
- //     printf("error writing reg to read\n");
- //     return 0;
- //   }
- //   if (0==i2c_read(I2C_DEV_CLK104, reg_read, 3)) {
- //     printf("error reading target reg\n");
- //     return 0;
- //   }
- //   *lmx_cd = ((uint8_t)i << 16) + (reg_read[1] << 8) + reg_read[2];
- // }
+    reg_read[0] = 0x0;
+    reg_read[1] = 0x0;
+    reg_read[2] = 0x0;
+    // the read is implmented in two stages using these base methods instead of
+    // the i2c_read_regs() method `I think` because we are working with a SPI to
+    // I2C translation and so we use the bridge to write something out and then
+    // read from the buffer of the device. The device doesn't understand a
+    // repeated start
+    if (0==i2c_write(I2C_DEV_CLK104, tx_read, 4)) {
+      printf("error writing reg to read\n");
+      return 0;
+    }
+    if (0==i2c_read(I2C_DEV_CLK104, reg_read, 3)) {
+      printf("error reading target reg\n");
+      return 0;
+    }
+    *lmx_cd = ((uint8_t)i << 16) + (reg_read[1] << 8) + reg_read[2];
+  }
 
- // // revert the MUX_OUT_LD_SEL bit
- // format_rfclk_pkt(LMX_ADC_SDO_SS, 0x0000241C, R0);
- // i2c_write(I2C_DEV_CLK104, R0, 4);
+  // revert the MUX_OUT_LD_SEL bit
+  format_rfclk_pkt(LMX_ADC_SDO_SS, 0x0000241C, R0);
+  i2c_write(I2C_DEV_CLK104, R0, 4);
 
- // // display lmx config info
- // printf("LMX2594 config data are:\n");
- // for (int i=112, j=0; i>=0; i--, j++) {
- //   if (j%9==8) {
- //     printf("0x%06x,\n", lmx_config_data[i]);
- //   } else {
- //     printf("0x%06x, ", lmx_config_data[i]);
- //   }
- // }
- //
- // // return sdo mux to lmk
- // ret = set_sdo_mux(LMK_MUX_SEL);
- // if (ret == 0) {
- //   printf("gpio sdo mux not set correctly\n");
- //   return 0;
- // }
+  // display lmx config info
+  printf("LMX2594 config data are:\n");
+  for (int i=112, j=0; i>=0; i--, j++) {
+    if (j%9==8) {
+      printf("0x%06x,\n", lmx_config_data[i]);
+    } else {
+      printf("0x%06x, ", lmx_config_data[i]);
+    }
+  }
+ 
+  // return sdo mux to lmk
+  ret = set_sdo_mux(LMK_MUX_SEL);
+  if (ret == 0) {
+    printf("gpio sdo mux not set correctly\n");
+    return 0;
+  }
 
   close_i2c_dev(I2C_DEV_CLK104);
   close_i2c_bus();
