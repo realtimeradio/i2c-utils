@@ -29,20 +29,11 @@ int main() {
   uint8_t spi_config[2] = {0xf0, 0x03}; // spi bridge configuration packet
   i2c_write(I2C_DEV_CLK104, spi_config, 2);
 
-  // configure lmk (has optional input to tile 226)
-  uint8_t rfclk_pkt_buffer[4];
-  for (int i=0; i<LMK_REG_CNT; i++) {
-    //printf("writing %x to the LMK...\n", LMK_ARRAY[i]);
-    format_rfclk_pkt(LMK_SDO_SS, LMK_ARRAY[i], rfclk_pkt_buffer);
-    i2c_write(I2C_DEV_CLK104, rfclk_pkt_buffer, 4);
-  }
+  // configure lmk (is an optional ref. clk input to tile 226)
+  prog_pll(I2C_DEV_CLK104, LMK_SDO_SS, LMK_ARRAY, LMK_REG_CNT);
 
   // configure clk104 adc lmx2594 to tile 225
-  for (int i=0; i<LMX2594_REG_CNT; i++) {
-    //printf("Writing %x to ADC LMX..\n", LMX_ARRAY[i]);
-    format_rfclk_pkt(LMX_ADC_SDO_SS, LMX_ARRAY[i], rfclk_pkt_buffer);
-    i2c_write(I2C_DEV_CLK104, rfclk_pkt_buffer, 4);
-  }
+  prog_pll(I2C_DEV_CLK104, LMX_ADC_SDO_SS, LMX_ARRAY, LMX2594_REG_CNT);
 
   printf("Reading LMK04828 register config\n");
   // sdo mux alread set to lmk from above

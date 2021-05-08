@@ -33,26 +33,15 @@ int main() {
   i2c_write(I2C_DEV_IOX, iox_gpio, 2);
 
   // configure lmk
-  uint8_t rfclk_pkt_buffer[4];
-  for (int i=0; i<LMK_REG_CNT; i++) {
-    printf("writing %x to the LMK...\n", LMK_ARRAY[i]);
-    format_rfclk_pkt(LMK_SDO_SS, LMK_ARRAY[i], rfclk_pkt_buffer);
-    i2c_write(I2C_DEV_LMK_SPI_BRIDGE, rfclk_pkt_buffer, 4);
-  }
+  // copying this from the zcu216 the only difference was changing the i2c dev
+  // there has got to be a way to generalize it further...
+  prog_pll(I2C_DEV_LMK_SPI_BRIDGE, LMK_SDO_SS, LMK_ARRAY, LMK_REG_CNT);
 
   // configure lmx for rf tile 224/225
-  for (int i=0; i<LMX2594_REG_CNT; i++) {
-    //printf("Writing %x to LMX for tiles 224/225..\n", LMX_ARRAY[i]);
-    format_rfclk_pkt(LMX_SDO_SS224_225, LMX_ARRAY[i], rfclk_pkt_buffer);
-    i2c_write(I2C_DEV_LMX_SPI_BRIDGE, rfclk_pkt_buffer, 4);
-  }
+  prog_pll(I2C_DEV_LMX_SPI_BRIDGE, LMX_SDO_SS224_225, LMX_ARRAY, LMX2594_REG_CNT);
 
   // configure lmx for rf tile 226/227
-  for (int i=0; i<LMX2594_REG_CNT; i++) {
-    //printf("Writing %x to LMX for tiles 226/227...\n", LMX_ARRAY[i]);
-    format_rfclk_pkt(LMX_SDO_SS226_227, LMX_ARRAY[i], rfclk_pkt_buffer);
-    i2c_write(I2C_DEV_LMX_SPI_BRIDGE, rfclk_pkt_buffer, 4);
-  }
+  prog_pll(I2C_DEV_LMX_SPI_BRIDGE, LMX_SDO_SS226_227, LMX_ARRAY, LMX2594_REG_CNT);
 
   // read back configuration from lmx
   // in general, the iox would need to be set to the chip we wanted to read, but

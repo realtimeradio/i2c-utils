@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdint.h> // uint8_t, uint16_t
 #include <unistd.h> // write
@@ -9,9 +10,10 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 
+#include "alpaca_i2c_utils.h"
 #include "alpaca_rfclks.h"
 
-// TODO explain why this works for both lmk/lmx chips
+// TODO help out by explaining why this works for both lmk/lmx chips
 void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer) {
   buffer[0] = SELECT_SPI_SDO(sdoselect);
   buffer[1] = (d >> 16) & 0xff;
@@ -19,9 +21,66 @@ void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer) {
   buffer[3] =        d  & 0xff;
 }
 
+uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type) {
+  uint32_t* rp;
+  rp = malloc(sizeof(uint32_t)*len);
+  if (rp == NULL) {
+    return rp;
+  }
+
+  char R[128];
+  char ln[128];
+  int n;
+  int i;
+
+  // lmk=0, lmx2594 anything else
+  // TICS raw register hex files for the different lmk parts contain the
+  // complete programming sequence for rfsocs. For the lmx we must agument by
+  // implementing the programming sequence as described in the data sheet to
+  // apply rst, remove rst, program 113 registers, apply R0 again. LMX raw hex
+  // text files start with the 113 program registers. Setting to 2 here leaves
+  // room to fill in reset assert/de-assert
+  i = (pll_type == 0) ? 0 : 2;
+
+  // TODO need to make sure this sscanf sequence works for all chips, only tested on lmk04828b
+  while (fgets(ln, sizeof(ln), tcsfile) != NULL) {
+    n = sscanf(ln, " %s %*s %x", R, &rp[i]);
+    if (n != 3) {
+      n = sscanf(ln, " %s %x", R, &rp[i]);
+    }
+    i++;
+  }
+
+  // prepare programming sequence for lmx2594 {apply rst, remove rst, 113 prgm registers, apply R0 again}
+  if (pll_type == 0) {
+    rp[0] = LMX2594_RST_VAL; // apply reset
+    rp[1] = 0x000000;        // remove reset
+    rp[len-1] = rp[len-2];   // apply R0 a second time
+  }
+
+  return rp;
+}
+
+int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len) {
+  int res = RFCLK_SUCCESS;
+  uint8_t rfclk_pkt_buffer[4];
+
+  for (int i=0; i<len; i++) {
+    format_rfclk_pkt(spi_sdosel, buf[i], rfclk_pkt_buffer);
+    res = i2c_write(dev, rfclk_pkt_buffer, 4); // TODO define magic 4? (packet size for lmk/lmx)
+    if (res == RFCLK_FAILURE) {
+      printf("i2c failed to program pll\n");
+      return res;
+    }
+  }
+
+  return res;
+}
+
 #if (PLATFORM == ZCU216) | (PLATFORM == ZCU208)
 int set_sdo_mux(int mux_sel) {
   // TODO: axi gpio driver support reading if wanted to read before doing anything
+  // TODO: move printf to stderr
   int fd_value;
   char gpio_path_value[64];
 
@@ -33,10 +92,8 @@ int set_sdo_mux(int mux_sel) {
   }
 
   if (mux_sel & 0x1) {
-    printf("bit 0=1\n");
     write(fd_value, "1", 2); // toggle hi,  "echo 1 > /sys/class/gpio/gpio510/value"
   } else {
-    printf("bit 0=0\n");
     write(fd_value, "0", 2); // toggle low, "echo 0 > /sys/class/gpio/gpio510/value"
   }
   close(fd_value);
@@ -49,10 +106,8 @@ int set_sdo_mux(int mux_sel) {
   }
 
   if (mux_sel & (0x1 << 1)) {
-    printf("bit 1=1\n");
     write(fd_value, "1", 2); //toggle hi
   } else {
-    printf("bit 1=0\n");
     write(fd_value, "0", 2); //toggle low
   }
   close(fd_value);
@@ -68,7 +123,6 @@ int init_clk104_gpio(int gpio_id) {
   int fd_export;
   int fd_direction;
   char gpio_path_direction[64];
-  char gpio_path_value[64];
 
   fd_export = open("/sys/class/gpio/export", O_WRONLY);
   if (fd_export < 0) {

@@ -21,8 +21,8 @@
 int fd_i2c0;
 int fd_i2c1;
 
-#define SUCCESS 1
-#define FAILURE 0
+#define SUCCESS 0
+#define FAILURE 1
 
 #define X(name, dev) dev,
 static I2CSlave i2c_devs[] = { I2C_DEVICES_MAP };

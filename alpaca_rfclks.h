@@ -50,7 +50,7 @@
 #elif PLATFORM == ZCU216
   /* zcu216: lmk04828b, lmx2594 */
   #define LMK_SDO_SS     1 /* LMK PLL,   SS1 on bridge, I2A on mux */
-  #define LMX_ADC_SDO_SS 3 /* ADC RFPLL, SS3 on bridge, I0A on mux */
+  #define LMX_ADC_SDO_SS 3 /* ADC RFPLL, SS3 on bridge, I0A on mux */ // TODO add tile number to be consistent across platform
   #define LMX_DAC_SDO_SS 2 /* DAC RFPLL, SS2 on bridge, I1A on mux */
   // clk104 does not have a connection on SS0 and I3A on mux
 
@@ -124,17 +124,21 @@
 /* common platform definitions */
 #define REG_RW_BIT 0x80      /* the 8th bit of the address section of the LMK/LMX indicates Read/Write to the register */
 
-#define LMX2594_REG_CNT 116  // (apply rst, remove rst, prgm 113 registers, program R0 a second time)
-#define LMX_MUXOUT_REG_ADDR 0x0 /* LMX MUXOUT reg. address (R0) */
-#define LMX_MUXOUT_REG_VAL  0x0 /* LMX MUXOUT reg. value */
-#define LMX_MUXOUT_LD_SEL   0x4 /* idea here was that instead this would be the bit we toggle on and off to achive readback */
+#define LMX2594_REG_CNT 116      /* {apply rst, remove rst, prgm 113 registers, program R0 a second time} */
+#define LMX2594_RST_VAL 0x000002 /* write to R0, assert rst bit */
+#define LMX_MUXOUT_REG_ADDR 0x0  /* LMX MUXOUT reg. address (R0) */
+#define LMX_MUXOUT_REG_VAL  0x0  /* LMX MUXOUT reg. value */
+#define LMX_MUXOUT_LD_SEL   0x4  /* idea here was that instead this would be the bit we toggle on and off to achive readback */
 
 #define SELECT_SPI_SDO(X) (1 << X)
 
-#define RFCLK_SUCCESS 1
-#define RFCLK_FAILURE 0
+#define RFCLK_SUCCESS 0
+#define RFCLK_FAILURE 1
 
 void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer);
+uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type);
+int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len);
+//TODO: implement an lmk/lmx readback
 
 #if (PLATFORM == ZCU216) | (PLATFORM == ZCU208)
 /* zcu216 or zcu208 for CLK104 */
