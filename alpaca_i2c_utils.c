@@ -83,15 +83,21 @@ int i2c_read_regs_bus(int fd, uint8_t addr, uint8_t *offset, uint16_t olen, uint
 }
 
 int i2c_set_mux(I2CSlave *dev_ptr) {
-  int ret = SUCCESS; 
-   /*
-   * i2c bus 1 on the zcu216 has two muxes, one at 0x74 and one at 0x75. Would
-   * it be necesary to disable the mux that is not of interest (first writing a
-   * packet to that mux configuring it as to not send data on that mux? I think
-   * the answer would be yes if there were addr collisions.  In this case the
-   * only device with a collision is si570 both having 0x5d but with that clock
-   * not used it isn't an issue right now.
-   */
+  int ret = SUCCESS;
+
+  // device is not addressed via mux (TODO test for zcu111)
+  if (dev_ptr->mux_addr == -1) {
+    return SUCCESS;
+  }
+
+  /*
+  * i2c bus 1 on the zcu216 has two muxes, one at 0x74 and one at 0x75. Would
+  * it be necesary to disable the mux that is not of interest (first writing a
+  * packet to that mux configuring it as to not send data on that mux? I think
+  * the answer would be yes if there were addr collisions.  In this case the
+  * only device with a collision is si570 both having 0x5d but with that clock
+  * not used it isn't an issue right now.
+  */
 
   ret = i2c_write_bus(*(dev_ptr->parent_fd), dev_ptr->mux_addr, &(dev_ptr->mux_sel), 1);
   if (ret == FAILURE) {
@@ -102,6 +108,11 @@ int i2c_set_mux(I2CSlave *dev_ptr) {
 
 int i2c_get_mux(I2CSlave *dev_ptr, uint8_t *buf) {
   int ret = SUCCESS;
+
+  // device is not addressed via mux (TODO test for zcu111)
+  if (dev_ptr->mux_addr == -1) {
+    return SUCCESS;
+  }
 
   ret = i2c_read_bus(*(dev_ptr->parent_fd), dev_ptr->mux_addr, buf, 1);
   if (ret == FAILURE) {

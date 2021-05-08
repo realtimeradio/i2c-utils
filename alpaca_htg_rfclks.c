@@ -1,35 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h> // uint8_t, uint16_t
-#include <unistd.h>
 
 #include "alpaca_i2c_utils.h"
+#include "alpaca_rfclks.h"
 #include "HTG_LMK_LMX_config.h"
-
-// htg and zcu111 use hardware gpio expanders, zcu216/208 use a fabric controlled gpio
-#define IOX_CONF_REG 0x03
-#define IOX_GPIO_REG 0x01
-#define IOX_MUX_SEL0 1       // port 0 of expander
-#define IOX_MUX_SEL1 (1 << 1)// port 1 of expander
-
-#define SELECT_SPI_SDO(X) (1 << X)
-#define LMK_SDO_SS        0 /* LMK04832 PLL on its own bridge connected to SS0, nothing else on that bridge is connected */
-#define LMX_SDO_SS224_225 0 /* ADC LMX2594 RFPLL for tiles 224/225, SS0 on bridge, I0A on mux */
-#define LMX_SDO_SS226_227 1 /* ADC LMX2594 RFPLL for tiles 226/227, SS1 on bridge, I1A on mux */
-
-#define LMK04832_REG_CNT 125
-#define LMX2594_REG_CNT 116    // (apply rst, remove rst, program 113 registers, program R0 a second time)
-
-#define REG_RW_BIT 0x80        // the 8th bit of the address section of the LMK/LMX indicates Read/Write to the register
-#define LMX_MUXOUT_LD_SEL 0x4  // bit mask in R0 to toggle MUXOUT_LD_SEL for SPI readback on LMK
-
-void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer) {
-  // TODO this needs to be moved to a common method as it works between lmk/lmx chips
-  buffer[0] = SELECT_SPI_SDO(sdoselect);
-  buffer[1] = (d >> 16) & 0xff;
-  buffer[2] = (d >> 8)  & 0xff;
-  buffer[3] =        d  & 0xff;
-}
 
 int main() {
   printf("Starting clock configuration...\n");
@@ -47,8 +22,9 @@ int main() {
 
   // configure io expander
   // iox configuration packet, power-on defaults are all `1` setting the iox
-  // configured as inputs. Here, set IOX_MUX_SEL bits to 0 configuring the outputs
-  uint8_t iox_config[2] = {IOX_CONF_REG, (0xff & ~(IOX_MUX_SEL0 | IOX_MUX_SEL1))}; // iox configuration packet
+  // configured as inputs. Here, set IOX_MUX_SEL bits to 0 configuring as outputs
+  // just using the lmx tile 224/225 macro since I know it is zero
+  uint8_t iox_config[2] = {IOX_CONF_REG, (0xff & LMX_ADC_MUX_SEL_224_225)}; // iox configuration packet
   i2c_write(I2C_DEV_IOX, iox_config, 2);
 
   // write to the GPIO reg to lower the outputs since power-on default is high
@@ -58,7 +34,7 @@ int main() {
 
   // configure lmk
   uint8_t rfclk_pkt_buffer[4];
-  for (int i=0; i<LMK04832_REG_CNT; i++) {
+  for (int i=0; i<LMK_REG_CNT; i++) {
     printf("writing %x to the LMK...\n", LMK_ARRAY[i]);
     format_rfclk_pkt(LMK_SDO_SS, LMK_ARRAY[i], rfclk_pkt_buffer);
     i2c_write(I2C_DEV_LMK_SPI_BRIDGE, rfclk_pkt_buffer, 4);
