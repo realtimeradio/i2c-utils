@@ -44,6 +44,11 @@ uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type) {
 
   // TODO need to make sure this sscanf sequence works for all chips, only tested on lmk04828b
   while (fgets(ln, sizeof(ln), tcsfile) != NULL) {
+    if (i >= len) {
+      free(rp);
+      return NULL;
+    }
+
     n = sscanf(ln, " %s %*s %x", R, &rp[i]);
     if (n != 3) {
       n = sscanf(ln, " %s %x", R, &rp[i]);
@@ -52,7 +57,7 @@ uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type) {
   }
 
   // prepare programming sequence for lmx2594 {apply rst, remove rst, 113 prgm registers, apply R0 again}
-  if (pll_type == 0) {
+  if (pll_type == 1) {
     rp[0] = LMX2594_RST_VAL; // apply reset
     rp[1] = 0x000000;        // remove reset
     rp[len-1] = rp[len-2];   // apply R0 a second time

@@ -63,7 +63,7 @@
   char CLK104_GPIO_MUX_SEL0[4];
   char CLK104_GPIO_MUX_SEL1[4];
 
-  #define LMK_REG_CNT 128//135 // zcu216/208 (128 (0-127) works, but seems to be a
+  #define LMK_REG_CNT 136 // zcu216/208 (128 (0-127) works, but seems to be a
                           // discrepencey as all tics outputs have 135 values (0-134))? Or have I just been
                           // getting lucky, because it looks like loading the tcs for this from the XILINX
                           // eval gives 135 outputs and programming from
@@ -77,10 +77,10 @@
   //
   // clk104 does not have a connection on SS0 and I3A on mux
   //
-  #define LMK_REG_CNT 135 // zcu216/208 (128 (0-127) works, but seems to be a
-                          // discrepencey as all tics outputs have 135 values (0-134))? Or have I just been
-                          // getting lucky, because it looks like loading the tcs for this from the XILINX
-                          // eval gives 135 outputs and programming from
+  #define LMK_REG_CNT 136 // zcu216/208 (128 (0-127) works, but seems to be a
+                          // discrepencey as all tics outputs have 135 values (0-135))? Or have I just been
+                          // getting lucky, because it looks like loading the tcs for this from the xilinx 
+                          // eval gives 136 outputs and programming from
                           // those also seem to lock
 
   #define LMK_MUXOUT_REG_ADDR 0X15F /* LMK MUXOUT reg. address */

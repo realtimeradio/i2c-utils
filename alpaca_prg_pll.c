@@ -35,6 +35,10 @@ int main(int argc, char**argv) {
       pll_type = 0;
     } else if (strcmp(argv[1], "-lmx") == 0) {
       pll_type = 1;
+    } else {
+      printf("must specify -lmk|-lmx\n");
+      usage(argv[0]);
+      return 0;
     }
   } else {
     printf("must specify -lmk|-lmx\n");
@@ -62,11 +66,22 @@ int main(int argc, char**argv) {
     return 0;
   }
 
-  rp = readtcs(fileptr, LMK_REG_CNT, pll_type);
+  int prg_cnt = (pll_type == 0) ? LMK_REG_CNT : LMX2594_REG_CNT;
+  rp = readtcs(fileptr, prg_cnt, pll_type);
   if (rp == NULL) {
     printf("problem allocating memory for config buffer, or parsing clock file\n");
     return 0;
   }
+
+  printf("loaded the following config:\n");
+  for (int i=0; i<prg_cnt; i++) {
+    if (i%9==8) {
+      printf("0x%06x,\n", rp[i]);
+    } else {
+      printf("0x%06x, ", rp[i]);
+    }
+  }
+  printf("\n\n");
 
   /* program zcu216 plls */
   int ret;
@@ -149,7 +164,7 @@ int main(int argc, char**argv) {
     }
 
     // display lmk config info
-    printf("LMK04828 config data are:\n");
+    printf("LMK04828 readback config data are:\n");
     for (int i=0; i<LMK_REG_CNT; i++) {
       if (i%9==8) {
         printf("0x%06x,\n", lmk_config_data[i]);
@@ -159,17 +174,7 @@ int main(int argc, char**argv) {
     }
     printf("\n");
   } else {
-    //TODO
-    printf("wrote the following config to the LMX2594\n");
-    for (int i=0; i<LMX2594_REG_CNT; i++) {
-      if (i%9==8) {
-        printf("0x%06x,\n", rp[i]);
-      } else {
-        printf("0x%06x, ", rp[i]);
-      }
-    }
-    printf("\n");
-    printf("WARN: readback of lmk not implemented\n");
+    printf("WARN: readback of lmx not implemented\n");
   }
 
   // release memory pll tcs config
