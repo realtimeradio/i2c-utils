@@ -67,6 +67,8 @@ int main(int argc, char**argv) {
   }
 
   int prg_cnt = (pll_type == 0) ? LMK_REG_CNT : LMX2594_REG_CNT;
+  int pkt_len = (pll_type == 0) ? LMK_PKT_SIZE: LMX_PKT_SIZE;
+
   rp = readtcs(fileptr, prg_cnt, pll_type);
   if (rp == NULL) {
     printf("problem allocating memory for config buffer, or parsing clock file\n");
@@ -92,7 +94,7 @@ int main(int argc, char**argv) {
   // init fabric gpio for SDIO readback (no IO Expander on zcu216/208)
   init_clk104_gpio(320);
 
-  // set sdo mux to lmk
+  // default init sdo mux to lmk
   ret = set_sdo_mux(LMK_MUX_SEL);
   usleep(0.5e6);
   if (ret == RFCLK_FAILURE) {
@@ -100,82 +102,21 @@ int main(int argc, char**argv) {
     return 0;
   }
 
-  // configure spi device
-  uint8_t spi_config[2] = {0xf0, 0x03}; // spi bridge configuration packet
+  // init spi device configuration
+  uint8_t spi_config[2] = {0xf0, 0x03};
   i2c_write(I2C_DEV_CLK104, spi_config, 2);
 
+  /* program */
   if (pll_type == 0) {
     // configure clk104 lmk (is an optional ref. clk input to tile 226)
-    ret = prog_pll(I2C_DEV_CLK104, LMK_SDO_SS, rp, LMK_REG_CNT);
+    ret = prog_pll(I2C_DEV_CLK104, LMK_SDO_SS, rp, prg_cnt, pkt_len);
   } else {
     // configure clk104 adc lmx2594 to tile 225
-    ret = prog_pll(I2C_DEV_CLK104, LMX_ADC_SDO_SS, rp, LMX2594_REG_CNT);
+    ret = prog_pll(I2C_DEV_CLK104, LMX_SDO_SS224_225, rp, prg_cnt, pkt_len);
   }
 
-  if (pll_type == 0) {
-    /* readback lmk config info*/
-    // TODO move readback to common method
-    printf("Reading LMK04828 register config\n");
-
-    /* sdo mux alread set to lmk from above in init sequence, otherwise would set */
-
-    uint8_t R351[4];
-    // hardcoded readback value computed from R531 to config spi readback
-    format_rfclk_pkt(LMK_SDO_SS, 0x00015f3b, R351);
-    if(RFCLK_FAILURE==i2c_write(I2C_DEV_CLK104, R351, 4)) {
-      printf("error setting R351 for readback on LMK04828\n");
-      return 0;
-    }
-
-    uint32_t lmk_config_data[256];
-    uint32_t* lmk_cd = lmk_config_data;
-
-    uint8_t lmk_reg_read[3] = {0x0, 0x0, 0x0};
-    uint8_t lmk_tx_read[4] = {0x0, 0x0, 0x0, 0x0};
-    for (int i=0; i<LMK_REG_CNT; i++, lmk_cd++) {
-      // LMK address to read do not simply increment as with the LMX so we pull
-      // out of valid addresses from the LMK and use those, end up double counting
-      // registers that are part of the reset sequence
-
-      lmk_tx_read[0] = SELECT_SPI_SDO(LMK_SDO_SS);
-      lmk_tx_read[1] = (0xff & (rp[i] >> 16)) | REG_RW_BIT;
-      lmk_tx_read[2] =  0xff & (rp[i] >> 8);
-
-      lmk_reg_read[0] = 0x0;
-      lmk_reg_read[1] = 0x0;
-      lmk_reg_read[2] = 0x0;
-
-      if (RFCLK_FAILURE==i2c_write(I2C_DEV_CLK104, lmk_tx_read, 4)) {
-        printf("error writing reg to read\n");
-        return 0;
-      }
-      if (RFCLK_FAILURE==i2c_read(I2C_DEV_CLK104, lmk_reg_read, 3)) {
-        printf("error reading target reg\n");
-        return 0;
-      }
-      *lmk_cd = (rp[i] & 0xffff00) + lmk_reg_read[2];
-    }
-
-    // revert PLL1_LD_MUX/PLL1_LD_TYPE reg back (register 0x15F, R351)
-    format_rfclk_pkt(LMK_SDO_SS, 0x00015f3e, R351);
-    if(RFCLK_FAILURE==i2c_write(I2C_DEV_CLK104, R351, 4)) {
-      printf("error setting R351 for readback on LMK04828\n");
-      return 0;
-    }
-
-    // display lmk config info
-    printf("LMK04828 readback config data are:\n");
-    for (int i=0; i<LMK_REG_CNT; i++) {
-      if (i%9==8) {
-        printf("0x%06x,\n", lmk_config_data[i]);
-      } else {
-        printf("0x%06x, ", lmk_config_data[i]);
-      }
-    }
-    printf("\n");
-  } else {
-    printf("WARN: readback of lmx not implemented\n");
-  }
+  /* readback */
+  get_pll_config(pll_type, rp);
 
   // release memory pll tcs config
   free(rp);

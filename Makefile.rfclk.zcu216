@@ -1,7 +1,7 @@
 APP = i2c-utils
-APPSOURCES= alpaca_i2c_utils.c alpaca_rfclks.c alpaca_zcu216_rfclks.c
-OUTS = /srv/tftpboot/nfs/alpaca/nfs/home/casper/bin/alpaca_zcu216_rfclks
-SRCS = alpaca_i2c_utils.c alpaca_rfclks.c alpaca_zcu216_rfclks.c
+APPSOURCES= alpaca_i2c_utils.c alpaca_rfclks.c alpaca_prg_pll.c
+OUTS = /srv/tftpboot/nfs/alpaca/nfs/home/casper/alpaca_prg_pll
+SRCS = alpaca_i2c_utils.c alpaca_rfclks.c alpaca_prg_pll.c
 INCLUDES =
 LIBDIR =
 BOARD_FLAG =
