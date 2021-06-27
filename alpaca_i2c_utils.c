@@ -86,7 +86,7 @@ int i2c_set_mux(I2CSlave *dev_ptr) {
   int ret = SUCCESS;
 
   // device is not addressed via mux (TODO test for zcu111)
-  if (dev_ptr->mux_addr == -1) {
+  if (dev_ptr->mux_addr == 0xff) {
     return SUCCESS;
   }
 
@@ -110,7 +110,7 @@ int i2c_get_mux(I2CSlave *dev_ptr, uint8_t *buf) {
   int ret = SUCCESS;
 
   // device is not addressed via mux (TODO test for zcu111)
-  if (dev_ptr->mux_addr == -1) {
+  if (dev_ptr->mux_addr == 0xff) {
     return SUCCESS;
   }
 

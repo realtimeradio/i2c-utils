@@ -63,12 +63,15 @@ typedef struct i2c_slave {
     X(I2C_DEV_SFP3_MOD, DEVICE_STRUCT("/dev/i2c-18", 0x75, (1 << 4), 0x51, -1, &fd_i2c1)) /* SFP3 Module, A2h SFF-8472 memory space */ \
 
 #elif PLATFORM == ZCU111
+  // TODO: the i2c fd paths for eeprom, and SI clk chips may not be correct, originally filled out using uboot `i2c bus` command, but
+  // this mapping does not end up matching linux, instead used `i2cdetect -l` `chan id`'s and compared with the device tree
+  // `dtc -I /sys/firmware/devicetree/base` to determine that the `PLL_SPI_BRIDGE` was actually `/dev/i2c-dev`
   #define PLATFORM_I2C_DEVICES \
     X(I2C_DEV_EEPROM,         DEVICE_STRUCT("/dev/i2c-6" , 0x74, (1 << 0), 0x54, -1, &fd_i2c1)) /* Device EEPROM */ \
     X(I2C_DEV_SI5341,         DEVICE_STRUCT("/dev/i2c-7" , 0x74, (1 << 1), 0x36, -1, &fd_i2c1)) /* si5341 clock */ \
     X(I2C_DEV_SI570,          DEVICE_STRUCT("/dev/i2c-8" , 0x74, (1 << 2), 0x5d, -1, &fd_i2c1)) /* user si570 clock */ \
     X(I2C_DEV_MGT_S1570,      DEVICE_STRUCT("/dev/i2c-9" , 0x74, (1 << 3), 0x5d, -1, &fd_i2c1)) /* user MGT si570 clock */ \
-    X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-11", 0x74, (1 << 5), 0x2f, -1, &fd_i2c1)) /* LMK/LMX spi bridge */ \
+    X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-20", 0x74, (1 << 5), 0x2f, -1, &fd_i2c1)) /* LMK/LMX spi bridge */ \
     X(I2C_DEV_SI5328,         DEVICE_STRUCT("/dev/i2c-10", 0x74, (1 << 4), 0x68, -1, &fd_i2c1)) /* IDT 8A34001 Transceiver clock chip */ \
     \
     X(I2C_DEV_SFP0,           DEVICE_STRUCT("/dev/i2c-X", 0x75, (1 << 7), 0x50, -1, &fd_i2c1)) /* SFP0 Socket, A0h SFF-8472 memory space */ \
@@ -80,7 +83,8 @@ typedef struct i2c_slave {
     X(I2C_DEV_SFP3    ,       DEVICE_STRUCT("/dev/i2c-X", 0x75, (1 << 4), 0x50, -1, &fd_i2c1)) /* SFP3 Module, A0h SFF-8472 memory space */ \
     X(I2C_DEV_SFP3_MOD,       DEVICE_STRUCT("/dev/i2c-X", 0x75, (1 << 4), 0x51, -1, &fd_i2c1)) /* SFP3 Module, A2h SFF-8472 memory space */ \
     \
-    X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-1", -1, -1, 0x20, -1, &fd_i2c0)) /* not connected on a mux, TCA6416 io expander for mux SPI SDO readback of LMK */ \
+    X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-0", 0xff, 0, 0x20, -1, &fd_i2c0)) /* not connected on a slave mux, TCA6416 io expander for mux SPI SDO readback of LMK */ \
+    // mux addr and mux sel were unsigned ints, cannot be -1, picked 0xff since outside of possible mux addr range and 0 for mux sel since there is no shift as not on a mux
 #elif PLATFORM == PYNQ2x2
   #define PLATFORM_I2C_DEVICES \
     X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-2", 0x71, (1 << 0), 0x20, -1, &fd_i2c1)) /* TCA6408 io expander for mux SPI SDO readback of LMK */ \
@@ -89,6 +93,7 @@ typedef struct i2c_slave {
     X(I2C_DEV_SYZYGY          DEVICE_STRUCT("/dev/i2c-6", 0x71, (1 << 4), 0x60, -1, &fd_i2c1)) /* SYZYGY connector */ \
     X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-7", 0x71, (1 << 5), 0x2a, -1, &fd_i2c1)) /* SC18IS602 i2c to spi bridge for LMK04832/LMX2594 */ \
     X(I2C_DEV_USB,            DEVICE_STRUCT("/dev/i2c-8", 0x71, (1 << 6), 0x2d, -1, &fd_i2c1)) /* USB */ \
+
 #else
   // why does this error not throw?
   #error "PLATFORM NOT CONFIUGURED"
