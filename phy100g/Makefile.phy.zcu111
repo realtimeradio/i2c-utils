@@ -1,0 +1,17 @@
+APP = phy-clk-zcu111
+APPSOURCES= alpaca_i2c_utils.c si538x.c
+OUTS = /srv/tftpboot/nfs/alpaca/nfs/home/casper/test_si5382
+SRCS = ../alpaca_i2c_utils.c si538x.c
+INCLUDES = -I../
+LIBDIR =
+BOARD_FLAG =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
