@@ -5,6 +5,10 @@
 
 #include "alpaca_i2c_utils.h"
 
+// i2c result values
+#define SUCCESS 0
+#define FAILURE 1
+
 // Offsets within SFF status block
 enum {
     SFF_ID = 0,
@@ -40,7 +44,7 @@ int main() {
 
   uint8_t addr = 0;
   int8_t sfp0_found = 0;
-  if (i2c_write(I2C_DEV_SFP0, &addr, 1)) {
+  if (SUCCESS==i2c_write(I2C_DEV_SFP0, &addr, 1)) {
     printf("SFP0 found...\n");
     sfp0_found = 1;
   } else {

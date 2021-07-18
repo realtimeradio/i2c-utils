@@ -92,7 +92,7 @@ int main(int argc, char**argv) {
   // init spi bridge
   init_i2c_dev(I2C_DEV_CLK104);
   // init fabric gpio for SDIO readback (no IO Expander on zcu216/208)
-  init_clk104_gpio(320);
+  init_clk104_gpio(510);
 
   // default init sdo mux to lmk
   ret = set_sdo_mux(LMK_MUX_SEL);
