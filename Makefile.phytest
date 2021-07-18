@@ -1,0 +1,17 @@
+APP = i2c-utils
+APPSOURCES= alpaca_i2c_utils.c 100g_phy_test.c
+OUTS =  /srv/tftpboot/nfs/alpaca/nfs/home/casper/100g_phy_test
+SRCS = alpaca_i2c_utils.c phytest_idt8a34001_regs.c 100g_phy_test.c
+INCLUDES =
+LIBDIR =
+BOARD_FLAG =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
