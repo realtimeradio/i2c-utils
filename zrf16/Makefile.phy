@@ -1,17 +1,17 @@
 APP = phy-clk-zrf16
 APPSOURCES= alpaca_i2c_utils.c si534x.c
-OUTS = /srv/tftpboot/nfs/alpaca/nfs/home/casper/test_si5341
+OUTS = /srv/tftpboot/nfs/zrf16/conf/home/casper/bin/prg_si5341_phyclk
 SRCS = ../alpaca_i2c_utils.c si534x.c
 INCLUDES = -I../
 LIBDIR =
-BOARD_FLAG =
+PLATFORM = -DPLATFORM=1
 OBJS =
 
 %.o: %.c
 	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
 
 all: $(OBJS)
-	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(SRCS) -o $(OUTS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
 
 clean:
 	rm -rf $(OUTS) *.o

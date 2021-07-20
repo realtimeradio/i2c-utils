@@ -1,0 +1,17 @@
+APP = i2c-utils
+APPSOURCES= alpaca_i2c_utils.c zcu216_test_i2c.c
+OUTS = /srv/tftpboot/nfs/alpaca/conf/home/casper/bin/zcu216_test_i2c
+SRCS = ../alpaca_i2c_utils.c idt8a34001_regs.c zcu216_test_i2c.c
+INCLUDES = -I../
+LIBDIR =
+PLATFORM = -DPLATFORM=0
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

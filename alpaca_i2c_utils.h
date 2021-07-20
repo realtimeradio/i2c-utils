@@ -21,7 +21,7 @@ typedef struct i2c_slave {
  * using `of node` device tree aliases to help assign addresses. These file
  * paths are aligned with the device tree from petalinux for these platforms.
  *
- * TODO: still need to define device tree for zcu208 and PYNQ 2x2
+ * TODO: still need to define device tree for zcu208
  */
 
 #if PLATFORM == ZCU216
@@ -92,14 +92,14 @@ typedef struct i2c_slave {
     \
     X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-0", 0xff, 0, 0x20, -1, &fd_i2c0)) /* not connected on a slave mux, TCA6416 io expander for mux SPI SDO readback of LMK */ \
     // mux addr and mux sel were unsigned ints, cannot be -1, picked 0xff since outside of possible mux addr range and 0 for mux sel since there is no shift as not on a mux
-#elif PLATFORM == PYNQ2x2
+#elif PLATFORM == RFSoC2x2
   #define PLATFORM_I2C_DEVICES \
-    X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-1", 0x71, (1 << 0), 0x20, -1, &fd_i2c1)) /* TCA6408 io expander for mux SPI SDO readback of LMK */ \
-    X(I2C_DEV_EEPROM,         DEVICE_STRUCT("/dev/i2c-2", 0x71, (1 << 1), 0x50, -1, &fd_i2c1)) /* Device EEPROM */ \
-    X(I2C_DEV_SI5340A         DEVICE_STRUCT("/dev/i2c-4", 0x71, (1 << 3), 0x74, -1, &fd_i2c1)) /* si5340 generator, (display port, PS, DDR4 PL)*/ \
-    X(I2C_DEV_SYZYGY          DEVICE_STRUCT("/dev/i2c-5", 0x71, (1 << 4), 0x60, -1, &fd_i2c1)) /* SYZYGY connector */ \
-    X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-6", 0x71, (1 << 5), 0x2a, -1, &fd_i2c1)) /* SC18IS602 i2c to spi bridge for LMK04832/LMX2594 */ \
-    X(I2C_DEV_USB,            DEVICE_STRUCT("/dev/i2c-7", 0x71, (1 << 6), 0x2d, -1, &fd_i2c1)) /* USB */ \
+    X(I2C_DEV_IOX,            DEVICE_STRUCT("/dev/i2c-1", 0x71, (1 << 0), 0x20, -1, &fd_i2c0)) /* TCA6408 io expander for mux SPI SDO readback of LMK */ \
+    X(I2C_DEV_EEPROM,         DEVICE_STRUCT("/dev/i2c-2", 0x71, (1 << 1), 0x50, -1, &fd_i2c0)) /* Device EEPROM */ \
+    X(I2C_DEV_SI5340A,        DEVICE_STRUCT("/dev/i2c-4", 0x71, (1 << 3), 0x74, -1, &fd_i2c0)) /* si5340 generator, (display port, PS, DDR4 PL)*/ \
+    X(I2C_DEV_SYZYGY,         DEVICE_STRUCT("/dev/i2c-5", 0x71, (1 << 4), 0x60, -1, &fd_i2c0)) /* SYZYGY connector */ \
+    X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-6", 0x71, (1 << 5), 0x2a, -1, &fd_i2c0)) /* SC18IS602 i2c to spi bridge for LMK04832/LMX2594 */ \
+    X(I2C_DEV_USB,            DEVICE_STRUCT("/dev/i2c-7", 0x71, (1 << 6), 0x2d, -1, &fd_i2c0)) /* USB */ \
     // i2c slave byte addr for syzygy and usb may be wrong
 #else
   // why does this error not throw?

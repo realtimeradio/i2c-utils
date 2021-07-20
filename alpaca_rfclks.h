@@ -36,11 +36,11 @@
   // For the SDIO mux the it is a two bit mux selecting the SDO line to go back
   // through the SPI bridge so setting S0,S1 to 0b11 (decimal 3) results in
   // selecting the LMK
-  #define MUX_SEL_BASE 0x03          /* where the mux sel wires are on gpio, 0b0000_0011 */
-  #define LMK_MUX_SEL 2              /* LMK04828 */
-  #define LMX_MUX_SEL_224_225 0  /* ADC LMX2594 PLL */
-  #define LMX_MUX_SEL_226_227 -1 /* no LMX2594 PLL connected  to these tiles */
-  #define LMX_MUX_SEL_228_229 1  /* DAC LMX2594 PLL */
+  #define MUX_SEL_BASE 0x03        /* where the mux sel wires are on gpio, 0b0000_0011 */
+  #define LMK_MUX_SEL 2            /* LMK04828 */
+  #define LMX_MUX_SEL_224_225 0    /* ADC LMX2594 PLL */
+  #define LMX_MUX_SEL_226_227 -1   /* no LMX2594 PLL connected  to these tiles */
+  #define LMX_MUX_SEL_228_229 1    /* DAC LMX2594 PLL */
   char CLK104_GPIO_MUX_SEL0[4];
   char CLK104_GPIO_MUX_SEL1[4];
 
@@ -91,8 +91,8 @@
   #define LMK_PKT_SIZE 5 // number of bytes in i2c write, {1 sdo select byte and 4 data bytes (32-bit) reg}
 
   //TODO what is the muxout addr/val
-  // seems like readback on lmk04208 is supported but is a a multi-step
-  // sequence, set a status pin to read back, write a readback register, and read back
+  // readback is supported on lmk04208 is but is a a multi-step sequence not yet implemented
+  // e.g., set a status pin to read back, write a readback register, and read back
   #define LMK_MUXOUT_REG_ADDR -1 /* LMK MUXOUT reg. address */
   #define LMK_MUXOUT_REG_VAL  -1 /* LMK MUXOUT reg. value */
 
@@ -118,20 +118,25 @@
   #define LMK_MUXOUT_REG_ADDR -1  /* LMK MUXOUT reg. address */
   #define LMK_MUXOUT_REG_VAL  -1  /* LMK MUXOUT reg. value */
 
-#elif PLATFORM == PYNQ2x2
-  /* PYNQ2x2: lmk TODO, lmx2594 */
+#elif PLATFORM == RFSoC2x2
+ /* RFSoC2x2: lmk04832, lmx2594 */
 
-  // TODO: fill out, On this board there are two LMX2594 one that drives an ADC tile and the other for DAC
-  //
-  // 224/226 and the other that drives DAC tiles 228/229
+  // One LMX2594 that drives both tiles 224/226 and one other that drives DAC tiles 228/229, although
+  // adc tiles 225 and 227 are not driven the same naming convention is used to be consistent
   #define LMK_SDO_SS        3  /* LMK04832 PLL connected to SS3 on bridge, I3A on mux */
-  #define LMX_SDO_SS224_226 0  /* ADC LMX2594 RFPLL for tile 224, SS0 on bridge, I0A on mux */
-  #define LMX_SDO_SS228_229 0  /* TODO */
+  #define LMX_SDO_SS224_225 0  /* ADC LMX2594 RFPLL for tile 224, SS0 on bridge, I0A on mux */
+  #define LMX_SDO_SS226_227 0  /* ADC LMX2594 RFPLL for tile 226, SS0 on bridge, I0A on mux */
+  #define LMX_SDO_SS228_229 1  /* DAC LMX2594 RFPLL for tile 228/229 SS1 on bridge, I1A on mux */
 
-  // TODO: fill out IOX network
+  #define IOX_CONF_REG 0x03
+  #define IOX_GPIO_REG 0x01
+  #define MUX_SEL_BASE 0x03
+  #define LMK_MUX_SEL  3
+  #define LMX_MUX_SEL_224_225 0
+  #define LMX_MUX_SEL_226_227 0
+  #define LMX_DAC_MUX_SEL_228_229 1
 
-  /////////////////////////////
-
+  #define LMK_REG_CNT 125
   #define LMK_PKT_SIZE 4
 
 #else

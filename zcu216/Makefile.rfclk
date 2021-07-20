@@ -1,0 +1,17 @@
+APP = prg_clk104
+APPSOURCES= alpaca_i2c_utils.c alpaca_rfclks.c alpaca_prg_pll.c
+OUTS = /srv/tftpboot/nfs/alpaca/conf/home/casper/bin/prg_clk104_rfpll
+SRCS = ../alpaca_i2c_utils.c ../alpaca_rfclks.c alpaca_prg_pll.c
+INCLUDES = -I../
+LIBDIR =
+PLATFORM = -DPLATFORM=0
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

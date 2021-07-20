@@ -1,7 +1,7 @@
-APP = htg-probe-qsfp28
-APPSOURCES= alpaca_i2c_utils.c htg_probe_qsfp28.c
-OUTS = /tftpboot/nfs/rootfs/home/casper/htg_probe_qsfp28
-SRCS = alpaca_i2c_utils.c htg_probe_qsfp28.c
+APP = zcu216-probe-sfp
+APPSOURCES= alpaca_i2c_utils.c zcu216_probe_sfp.c
+OUTS = /srv/tftpboot/nfs/alpaca/nfs/home/casper/zcu216_probe_sfp
+SRCS = alpaca_i2c_utils.c zcu216_probe_sfp.c
 INCLUDES =
 LIBDIR =
 BOARD_FLAG =

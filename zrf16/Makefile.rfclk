@@ -1,0 +1,17 @@
+APP = i2c-utils
+APPSOURCES= alpaca_i2c_utils.c alpaca_rfclks.c alpaca_htg_rfclks.c
+OUTS = /srv/tftpboot/nfs/zrf16/conf/home/casper/bin/prg_rfpll
+SRCS = ../alpaca_i2c_utils.c ../alpaca_rfclks.c alpaca_htg_rfclks.c
+INCLUDES = -I../
+LIBDIR =
+RFSOC_PLATFORM = -DPLATFORM=1
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(RFSOC_PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

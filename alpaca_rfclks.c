@@ -366,6 +366,8 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
     res = get_lmx2594_config(I2C_DEV_PLL_SPI_BRIDGE, regbuf);
     #elif PLATFORM == ZRF16
     res = get_lmx2594_config(I2C_DEV_LMX_SPI_BRIDGE, regbuf);
+    #elif PLATFORM == RFSoC2x2
+    res = get_lmx2594_config(I2C_DEV_PLL_SPI_BRIDGE, regbuf);
     #else
     printf("platform does not support lmx readback\n");
     #endif

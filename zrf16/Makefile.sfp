@@ -1,0 +1,17 @@
+APP = htg-probe-qsfp28
+APPSOURCES= alpaca_i2c_utils.c htg_probe_qsfp28.c
+OUTS = /srv/tftpboot/nfs/zrf16/conf/home/casper/bin/htg_probe_qsfp28
+SRCS = ../alpaca_i2c_utils.c htg_probe_qsfp28.c
+INCLUDES = -I../
+LIBDIR =
+PLATFORM = -DPLATFORM=1
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
