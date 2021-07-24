@@ -154,7 +154,9 @@
 #define LMX_MUXOUT_REG_VAL  0x0  /* LMX MUXOUT reg. value */
 #define LMX_MUXOUT_LD_SEL   0x4  /* idea here was that instead this would be the bit we toggle on and off to achive readback */
 
+#define LMK04208_RST_VAL 0x20000
 #define LMK04828_RST_VAL 0x80
+#define LMK04832_RST_VAL 0x90
 
 #define SELECT_SPI_SDO(X) (1 << X)
 

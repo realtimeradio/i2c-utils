@@ -8,8 +8,8 @@
 #define RFSoC2x2 4
 
 // declare platform type and include "alpaca_platform.h" 
-//#ifndef PLATFORM
-//#define PLATFORM 0
-//#endif
+#ifndef PLATFORM
+#define PLATFORM 0
+#endif
 
 #endif /* ALPACA_PLATFORM_H_ */

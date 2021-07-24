@@ -38,13 +38,12 @@ int main(int argc, char**argv) {
   int prg_cnt = (pll_type == 0) ? LMK_REG_CNT : LMX2594_REG_CNT;
   int pkt_len = (pll_type == 0) ? LMK_PKT_SIZE: LMX_PKT_SIZE;
 
-  i2cdev = I2C_DEV_CLK104;
+  i2cdev = I2C_DEV_PLL_SPI_BRIDGE;
+
   // init i2c
   init_i2c_bus();
   // init spi bridge
   init_i2c_dev(i2cdev);
-  // init fabric gpio for SDIO readback (no IO Expander on zcu216/208)
-  init_clk104_gpio(510);
 
   // configure spi device
   uint8_t spi_config[2] = {0xf0, 0x03}; // spi bridge configuration packet
@@ -57,7 +56,7 @@ int main(int argc, char**argv) {
   // reset pll
   if (pll_type == 0) {
     spi_sdosel = LMK_SDO_SS;
-    rst_pkt = LMK04828_RST_VAL;
+    rst_pkt = LMK04832_RST_VAL;
   } else {
     spi_sdosel = LMX_SDO_SS224_225;
     rst_pkt = LMX2594_RST_VAL;
