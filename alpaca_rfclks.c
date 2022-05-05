@@ -118,8 +118,13 @@ int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len, uint8_
     res = i2c_write(dev, rfclk_pkt_buffer, pkt_len);
     if (res == RFCLK_FAILURE) {
       printf("i2c failed to program pll\n"); // TODO: move printf()s to stderr;
+      free(rfclk_pkt_buffer);
       return res;
     }
+
+    // wait 1 ms before programming last register. This is required for the
+    // LMX2594 to ensure VCO calibration runs from a stable state.
+    if (i== len-2) { usleep(1000); }
   }
 
   free(rfclk_pkt_buffer);
@@ -254,7 +259,10 @@ int get_lmx2594_config(I2CDev dev, uint32_t* regbuf) {
 
   // revert the MUX_OUT_LD_SEL bit
   format_rfclk_pkt(LMX_SDO_SS224_225, 0x0000241C, R0, 4); // magic 4, lmx2594 i2c packets are 4 bytes
-  i2c_write(dev, R0, 4);
+  if (RFCLK_FAILURE==i2c_write(dev, R0, 4)) {
+    printf("error reverting MUX_OUTLD_SEL\n");
+    return RFCLK_FAILURE;
+  }
 
   // display lmx config info
   printf("LMX2594 config data are:\n");

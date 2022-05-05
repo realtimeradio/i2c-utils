@@ -82,9 +82,9 @@
   #define IOX_CONF_REG 0x07     // Configuration 1 (second set of ports)
   #define IOX_GPIO_REG 0x03     // Output port 1   (second set of ports)
   #define MUX_SEL_BASE 0x06     // where the mux sel wires are on gpio, 0b0000_0110
-  #define LMK_MUX_SEL             (2 << 1) // all shifted by 1 since connections on iox chip are
+  #define LMK_MUX_SEL         (2 << 1) // all shifted by 1 since connections on iox chip
   #define LMX_MUX_SEL_224_225 (0 << 1) // are moved up on the chip by 1 port (second and
-  #define LMX_MUX_SEL_226_227 (1 << 1) // thid bits)
+  #define LMX_MUX_SEL_226_227 (1 << 1) // third bits)
   #define LMX_MUX_SEL_228_229 (3 << 1)
 
   #define LMK_REG_CNT 26

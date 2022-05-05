@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdint.h> // uint8_t, uint16_t
 
-
 #include <errno.h>
 #include <assert.h>
 
@@ -115,13 +114,14 @@ int main(int argc, char**argv) {
     // configure lmk
     ret = prog_pll(I2C_DEV_PLL_SPI_BRIDGE, LMK_SDO_SS, rp, prg_cnt, pkt_len);
   } else {
-    // configure adc lmx2594's to all 4 adc tiles 225
+    // configure adc lmx2594's to all 4 adc tiles 224-227 and dac tiles 228/229
     ret = prog_pll(I2C_DEV_PLL_SPI_BRIDGE, LMX_SDO_SS224_225, rp, prg_cnt, pkt_len);
     ret = prog_pll(I2C_DEV_PLL_SPI_BRIDGE, LMX_SDO_SS226_227, rp, prg_cnt, pkt_len);
+    ret = prog_pll(I2C_DEV_PLL_SPI_BRIDGE, LMX_SDO_SS228_229, rp, prg_cnt, pkt_len);
   }
 
   /* readback */
-  // NOTE: the `get_pll_config` method readback for the lmx only reads teh
+  // NOTE: the `get_pll_config` method readback for the lmx only reads the
   // configuration for the tile 224/225 LMX
   get_pll_config(pll_type, rp);
 

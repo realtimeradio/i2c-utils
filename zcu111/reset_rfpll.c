@@ -84,6 +84,15 @@ int main(int argc, char**argv) {
       printf("i2c could not reset tile 226/227 lmx pll\n");
       return ret;
     }
+
+    //lmx for tiles 228/229
+    spi_sdosel = LMX_SDO_SS228_229;
+    format_rfclk_pkt(spi_sdosel, rst_pkt, rfclk_pkt_buffer, pkt_len);
+    ret = i2c_write(i2cdev, rfclk_pkt_buffer, pkt_len);
+    if (ret == RFCLK_FAILURE) {
+      printf("i2c could not reset tile 226/227 lmx pll\n");
+      return ret;
+    }
   }
 
   close_i2c_dev(i2cdev);
