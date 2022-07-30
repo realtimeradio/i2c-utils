@@ -69,6 +69,7 @@ int read_spi_pkt(spi_dev_t *spidev, uint8_t *buf, uint8_t len) {
 
   int num_rd;
   num_rd = read(spidev->fd, buf, len);
+  usleep(SLEEP_TIME_uS);
   return num_rd;
 }
 
@@ -80,4 +81,26 @@ int write_spi_pkt(spi_dev_t *spidev, uint8_t *buf, uint8_t len) {
   num_wr = write(spidev->fd, buf, len);
   usleep(SLEEP_TIME_uS);
   return ret;
+}
+
+int spi_transfer(spi_dev_t *spidev, uint8_t const *tx, uint8_t const *rx, uint8_t len) {
+  int ret = SUCCESS;
+
+  struct spi_ioc_transfer xfer;
+  memset(&xfer, 0, sizeof(xfer)); // Initialize data structures to 0
+
+  xfer.tx_buf = (unsigned long)&tx[0];
+  xfer.rx_buf = (unsigned long)&rx[0];
+  xfer.speed_hz = spidev->speed;
+  xfer.bits_per_word = spidev->bits;
+  xfer.len = len; // each transfer is only 1 byte long
+  xfer.delay_usecs = spidev->delay;
+  ret = ioctl(spidev->fd, SPI_IOC_MESSAGE(1), xfer);
+
+  if (ret < 1) {
+    printf("ioctl failed and returned errno %s\n", strerror(errno));
+    ret = FAILURE;
+  }
+  return ret;
+
 }

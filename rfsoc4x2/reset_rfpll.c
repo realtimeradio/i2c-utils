@@ -68,7 +68,7 @@ int main(int argc, char**argv) {
     }
     close_spi_dev(&spidev);
     // now open dac rfpll and reset
-    strcpy(spidev.device, ADC_RFPLL_SPIDEV);
+    strcpy(spidev.device, DAC_RFPLL_SPIDEV);
     init_spi_dev(&spidev);
     ret = write_spi_pkt(&spidev, rfclk_pkt_buffer, pkt_len);
   }

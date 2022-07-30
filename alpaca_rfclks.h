@@ -220,6 +220,7 @@ int prog_pll(spi_dev_t *dev, uint32_t* buf, uint16_t len, uint8_t pkt_len);
 // to the readback method, but that seems liek a lot of work to implement now
 // and so just hardcoding most readback methods
 int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf);
+int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf);
 int get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf);
 int get_lmx2594_config(spi_dev_t *dev, uint32_t* regbuf);
 

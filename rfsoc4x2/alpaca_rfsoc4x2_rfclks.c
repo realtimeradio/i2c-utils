@@ -98,7 +98,7 @@ int main(int argc, char**argv) {
     ret = prog_pll(&spidev, rp, prg_cnt, pkt_len);
 
     /* readback */
-    get_pll_config(&spidev, pll_type, rp);
+    printf("rfsoc4x2 does not support register readback, only led status\n");
 
   } else {
     // rfsoc4x2 has one adc rfpll and one dac rfpll
@@ -106,15 +106,16 @@ int main(int argc, char**argv) {
     strcpy(spidev.device, ADC_RFPLL_SPIDEV);
     init_spi_dev(&spidev);
     ret = prog_pll(&spidev, rp, prg_cnt, pkt_len);
+
     /* readback */
-    get_pll_config(&spidev, pll_type, rp);
-    close_spi_dev(&spidev);
+    printf("rfsoc4x2 does not support register readback, only led status\n");
 
     // now dac rfpll
     strcpy(spidev.device, DAC_RFPLL_SPIDEV);
     init_spi_dev(&spidev);
+
     /* readback */
-    get_pll_config(&spidev, pll_type, rp);
+    printf("rfsoc4x2 does not support register readback, only led status\n");
     ret = prog_pll(&spidev, rp, prg_cnt, pkt_len);
   }
 

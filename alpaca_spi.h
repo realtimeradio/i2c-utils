@@ -1,6 +1,8 @@
 #ifndef ALPACA_SPI_H
 #define ALPACA_SPI_H
 #include <stdint.h>
+#include <errno.h>
+#include <string.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -18,7 +20,7 @@ typedef struct SPIDevice {
   uint8_t bits;
   uint32_t speed;
   uint16_t delay;
-  // Some sane defaults for the int types would be {-1, 0, 8, 500000, 0}
+  // Some sane defaults for the int types would be {-1, SPI_MODE_0 | SPI_CS_HIGH, 8, 500000, 0}
 } spi_dev_t;
 
 int init_spi_dev(spi_dev_t *spidev);
@@ -26,4 +28,6 @@ int close_spi_dev(spi_dev_t *spidev);
 
 int read_spi_pkt(spi_dev_t *spidev, uint8_t *buf, uint8_t len);
 int write_spi_pkt(spi_dev_t *spidev, uint8_t *buf, uint8_t len);
+int spi_transfer(spi_dev_t *spidev, uint8_t const *tx, uint8_t const *rx, uint8_t len);
+
 #endif // ALPACA_SPI_H
