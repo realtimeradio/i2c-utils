@@ -103,7 +103,7 @@ typedef struct i2c_slave {
     // i2c slave byte addr for syzygy and usb may be wrong
 #else
   // why does this error not throw?
-  #error "PLATFORM NOT CONFIUGURED"
+  #error "PLATFORM NOT CONFIGURED"
 #endif
 
 #define I2C_DEVICES_MAP PLATFORM_I2C_DEVICES

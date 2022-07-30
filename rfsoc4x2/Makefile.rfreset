@@ -1,0 +1,17 @@
+APP = reset_rfpll
+APPSOURCES= ../alpaca_rfclks.c ./reset_rfpll.c
+OUTS = ./reset_rfpll
+SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./reset_rfpll.c
+INCLUDES = -I../
+PLATFORM = -DPLATFORM=5
+LIBDIR =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

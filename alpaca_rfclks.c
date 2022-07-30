@@ -10,7 +10,6 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 
-#include "alpaca_i2c_utils.h"
 #include "alpaca_rfclks.h"
 
 /*
@@ -29,17 +28,23 @@
  * len:
  *   length of i2c tranaction buffer (including sdo select byte).
  */
+#ifdef I2C_COM_BUS
 void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer, uint8_t len) {
 
   // add spi select byte first
   buffer[0] = SELECT_SPI_SDO(sdoselect);
+  int reg_start= 1;
+#else
+void format_rfclk_pkt(uint32_t d, uint8_t* buffer, uint8_t len) {
+  int reg_start= 0;
+#endif
 
   // format the rest of the rfpll data packet e.g.,
   // buffer[1] = (d >> 16) & 0xff;
   // buffer[2] = (d >> 8)  & 0xff;
   // buffer[3] =        d  & 0xff;
 
-  for (int i=1; i<len; i++) {
+  for (int i=reg_start; i<len; i++) {
     buffer[i] = (d >> (len-i-1)*8) & 0xff;
   }
 
@@ -107,15 +112,24 @@ uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type) {
  *   number of bytes per rfpll write transactions, e.g., LMK04208={sdo byte, 4
  *   data bytes} (5) and LMK04828B/04832/LMX2594 are {sdo byte, 3 data bytes} (4)
  */
+#ifdef I2C_COM_BUS
 int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len, uint8_t pkt_len) {
+#else
+int prog_pll(spi_dev_t *dev, uint32_t* buf, uint16_t len, uint8_t pkt_len) {
+#endif
   int res = RFCLK_SUCCESS;
 
   uint8_t* rfclk_pkt_buffer;
   rfclk_pkt_buffer = malloc(sizeof(uint8_t)*pkt_len);
 
   for (int i=0; i<len; i++) {
+#ifdef I2C_COM_BUS
     format_rfclk_pkt(spi_sdosel, buf[i], rfclk_pkt_buffer, pkt_len);
     res = i2c_write(dev, rfclk_pkt_buffer, pkt_len);
+#else
+    format_rfclk_pkt(buf[i], rfclk_pkt_buffer, pkt_len);
+    res = write_spi_pkt(dev, rfclk_pkt_buffer, pkt_len);
+#endif
     if (res == RFCLK_FAILURE) {
       printf("i2c failed to program pll\n"); // TODO: move printf()s to stderr;
       free(rfclk_pkt_buffer);
@@ -142,15 +156,24 @@ int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len, uint8_
  *   from a tcs file)
  *
  */
+#ifdef I2C_COM_BUS
 int get_lmk04828_config(I2CDev dev, uint32_t* regbuf) {
+#else
+int get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
+#endif
 
   // at this point we assume sdo mux has already been set to correctly read back
 
   printf("Reading LMK04828 register config\n");
-  uint8_t R351[4];
+  uint8_t R351[LMK_PKT_SIZE];
   // hardcoded readback value computed from R531 to config spi readback
-  format_rfclk_pkt(LMK_SDO_SS, 0x00015f3b, R351, 4); // magic 4, lmk04208 i2c packets are 4 bytes
-  if(RFCLK_FAILURE==i2c_write(dev, R351, 4)) {
+#ifdef I2C_COM_BUS
+  format_rfclk_pkt(LMK_SDO_SS, 0x00015f3b, R351, LMK_PKT_SIZE); // lmk04828 i2c packets are 4 bytes {sdo, register value}
+  if(RFCLK_FAILURE==i2c_write(dev, R351, LMK_PKT_SIZE)) {
+#else
+  format_rfclk_pkt(0x00015f3b, R351, LMK_PKT_SIZE); // lmk04828 spi packets are 3 bytes
+  if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
+#endif
     printf("error setting R351 for readback on LMK04828\n");
     return RFCLK_FAILURE;
   }
@@ -158,26 +181,39 @@ int get_lmk04828_config(I2CDev dev, uint32_t* regbuf) {
   uint32_t lmk_config_data[256]; // arbitrary size of 256
   uint32_t* lmk_cd = lmk_config_data;
 
-  uint8_t lmk_reg_read[3] = {0x0, 0x0, 0x0};
-  uint8_t lmk_tx_read[4] = {0x0, 0x0, 0x0, 0x0};
+  uint8_t lmk_reg_read[LMK_PKT_SIZE] = {0x0};
+  uint8_t lmk_tx_read[LMK_PKT_SIZE] = {0x0};
   for (int i=0; i<LMK_REG_CNT; i++, lmk_cd++) {
     // LMK address to read do not simply increment as with the LMX so we pull
     // out of valid addresses from the LMK and use those, end up double counting
     // registers that are part of the reset sequence
 
+#ifdef I2C_COM_BUS
     lmk_tx_read[0] = SELECT_SPI_SDO(LMK_SDO_SS);
     lmk_tx_read[1] = (0xff & (regbuf[i] >> 16)) | REG_RW_BIT;
     lmk_tx_read[2] =  0xff & (regbuf[i] >> 8);
+#else
+    lmk_tx_read[0] = (0xff & (regbuf[i] >> 16)) | REG_RW_BIT;
+    lmk_tx_read[1] =  0xff & (regbuf[i] >> 8);
+#endif
 
     lmk_reg_read[0] = 0x0;
     lmk_reg_read[1] = 0x0;
     lmk_reg_read[2] = 0x0;
 
-    if (RFCLK_FAILURE==i2c_write(dev, lmk_tx_read, 4)) {
+#ifdef I2C_COM_BUS
+    if (RFCLK_FAILURE==i2c_write(dev, lmk_tx_read, LMK_PKT_SIZE)) {
+#else
+    if (RFCLK_FAILURE==write_spi_pkt(dev, lmk_tx_read, LMK_PKT_SIZE)) {
+#endif
       printf("error writing reg to read\n");
       return RFCLK_FAILURE;
     }
-    if (RFCLK_FAILURE==i2c_read(dev, lmk_reg_read, 3)) {
+#ifdef I2C_COM_BUS
+    if (RFCLK_FAILURE==i2c_read(dev, lmk_reg_read, 3)) { // magic 3,
+#else
+    if (RFCLK_FAILURE==read_spi_pkt(dev, lmk_reg_read, 3)) { // magic 3,
+#endif
       printf("error reading target reg\n");
       return RFCLK_FAILURE;
     }
@@ -185,8 +221,13 @@ int get_lmk04828_config(I2CDev dev, uint32_t* regbuf) {
   }
 
   // revert PLL1_LD_MUX/PLL1_LD_TYPE reg back (register 0x15F, R351)
-  format_rfclk_pkt(LMK_SDO_SS, 0x00015f3e, R351, 4); // magic 4, lmk04208 i2c packets are 4 bytes
-  if(RFCLK_FAILURE==i2c_write(dev, R351, 4)) {
+#ifdef I2C_COM_BUS
+  format_rfclk_pkt(LMK_SDO_SS, 0x00015f3e, R351, LMK_PKT_SIZE);
+  if(RFCLK_FAILURE==i2c_write(dev, R351, LMK_PKT_SIZE)) {
+#else
+  format_rfclk_pkt(0x00015f3e, R351, LMK_PKT_SIZE);
+  if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
+#endif
     printf("error setting R351 for readback on LMK04828\n");
     return RFCLK_FAILURE;
   }
@@ -215,16 +256,26 @@ int get_lmk04828_config(I2CDev dev, uint32_t* regbuf) {
  *
  * NOTE: when called this is hardcoded to only read LMX_224_225
  */
+#ifdef I2C_COM_BUS
 int get_lmx2594_config(I2CDev dev, uint32_t* regbuf) {
+#else
+int get_lmx2594_config(spi_dev_t *dev, uint32_t* regbuf) {
+#endif
 
-  // at this point we assume sdo mux has already been set to correctly read back
+  // at this point we assume sdo mux (*_MUX_SEL*) has already been set to
+  // correctly read back (using *_SDO_*) here
 
   printf("\nReading LMX2594 register config\n");
   // set MUX_OUT_LD_SEL of lmx register R0 for readback
-  uint8_t R0[4];
+  uint8_t R0[LMX_PKT_SIZE];
   // hardcoded R0 from LMX config array determined as (R0 & ~LMX_MUXOUT_LD_SEL)
-  format_rfclk_pkt(LMX_SDO_SS224_225, 0x00002418, R0, 4);// magic 4, lmx2594 i2c packets are 4 bytes
-  if(RFCLK_FAILURE==i2c_write(dev, R0, 4)) {
+#ifdef I2C_COM_BUS
+  format_rfclk_pkt(LMX_SDO_SS224_225, 0x00002418, R0, LMX_PKT_SIZE);
+  if(RFCLK_FAILURE==i2c_write(dev, R0, LMX_PKT_SIZE)) {
+#else
+  format_rfclk_pkt(0x00002418, R0, LMX_PKT_SIZE);
+  if(RFCLK_FAILURE==write_spi_pkt(dev, R0, LMX_PKT_SIZE)) {
+#endif
     printf("error setting R0 register for readback\n");
     return RFCLK_FAILURE;
   }
@@ -232,25 +283,40 @@ int get_lmx2594_config(I2CDev dev, uint32_t* regbuf) {
   uint32_t lmx_config_data[256];
   uint32_t* lmx_cd = lmx_config_data;
 
-  uint8_t reg_read[3] = {0x0, 0x0, 0x0};
-  uint8_t tx_read[4] = {0x0, 0x0, 0x0, 0x0};
-  for (int i=0; i<113; i++, lmx_cd++) { //113 registers in LMX
+  uint8_t reg_read[LMX_PKT_SIZE] = {0x0};
+  uint8_t tx_read[LMX_PKT_SIZE] = {0x0};
+  // 113 registers for reading from the LMX hear instead of the LMX2594_REG_CNT
+  // because that value is for the programming sequence
+  for (int i=0; i<113; i++, lmx_cd++) {
+#ifdef I2C_COM_BUS
     tx_read[0] = SELECT_SPI_SDO(LMX_SDO_SS224_225);
     tx_read[1] = (i | REG_RW_BIT);
+#else
+    tx_read[0] = (i | REG_RW_BIT);
+#endif
 
     reg_read[0] = 0x0;
     reg_read[1] = 0x0;
     reg_read[2] = 0x0;
-    // the read is implmented in two stages using these base methods instead of
-    // the i2c_read_regs() method `I think` because we are working with a SPI to
-    // I2C translation and so we use the bridge to write something out and then
-    // read from the buffer of the device. The device doesn't understand a
-    // repeated start
-    if (RFCLK_FAILURE==i2c_write(dev, tx_read, 4)) {
+
+#ifdef I2C_COM_BUS
+    if (RFCLK_FAILURE==i2c_write(dev, tx_read, LMX_PKT_SIZE)) {
+#else
+    if (RFCLK_FAILURE==write_spi_pkt(dev, tx_read, LMX_PKT_SIZE)) {
+#endif
       printf("error writing reg to read\n");
       return RFCLK_FAILURE;
     }
-    if (RFCLK_FAILURE==i2c_read(dev, reg_read, 3)) {
+#ifdef I2C_COM_BUS
+    // note that read pkt_len was 3 for this i2c read (the size of an LMX
+    // register) but now using the defined LMX_PKT_SIZE an i2c read would
+    // request 4 bytes, if this hangs or reads from i2c result in weird
+    // behaviour errors this would be changed back in errors. TODO Additionally,
+    // A COM_PKT_LEN should be made now with I2C and SPI implementations
+    if (RFCLK_FAILURE==i2c_read(dev, reg_read, LMX_PKT_SIZE)) {
+#else
+    if (RFCLK_FAILURE==read_spi_pkt(dev, reg_read, LMX_PKT_SIZE)) {
+#endif
       printf("error reading target reg\n");
       return RFCLK_FAILURE;
     }
@@ -258,8 +324,13 @@ int get_lmx2594_config(I2CDev dev, uint32_t* regbuf) {
   }
 
   // revert the MUX_OUT_LD_SEL bit
-  format_rfclk_pkt(LMX_SDO_SS224_225, 0x0000241C, R0, 4); // magic 4, lmx2594 i2c packets are 4 bytes
-  if (RFCLK_FAILURE==i2c_write(dev, R0, 4)) {
+#ifdef I2C_COM_BUS
+  format_rfclk_pkt(LMX_SDO_SS224_225, 0x0000241C, R0, LMX_PKT_SIZE); // lmx2594 i2c packets are 4 bytes {sdo, 24-bit reg value}
+  if (RFCLK_FAILURE==i2c_write(dev, R0, LMX_PKT_SIZE)) {
+#else
+  format_rfclk_pkt(0x0000241C, R0, LMX_PKT_SIZE); // lmx2594 spi packets are 3 bytes {just the 24-bit reg value}
+  if (RFCLK_FAILURE==write_spi_pkt(dev, R0, LMX_PKT_SIZE)) {
+#endif
     printf("error reverting MUX_OUTLD_SEL\n");
     return RFCLK_FAILURE;
   }
@@ -288,7 +359,11 @@ int get_lmx2594_config(I2CDev dev, uint32_t* regbuf) {
  *   from a tcs file)
  *
  */
+#ifdef I2C_COM_BUS
 int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
+#else
+int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf) {
+#endif
   int res = RFCLK_SUCCESS;
 
   if (pll_type == 0) {
@@ -306,7 +381,7 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
 
     res = get_lmk04828_config(I2C_DEV_CLK104, regbuf);
 
-    #else
+    #elif (PLATFORM == ZRF16) | (PLATFORM == RFSoC2x2)
     // use iox, read current iox gpio reg value, mask this with desired mux sel, write
     uint8_t iox_gpio[2] = {IOX_GPIO_REG, 0x0};
     res = i2c_write(I2C_DEV_IOX, &(iox_gpio[0]), 1);
@@ -329,6 +404,10 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
 
     printf("WARN: readback for lmk not implemented\n");
 
+    #elif PLATFORM == RFSoC4x2
+      res = get_lmk04828_config(dev, regbuf);
+    #else
+      #error "PLATFORM NOT CONFIGURED"
     #endif
 
   } else {
@@ -344,7 +423,7 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
       return res;
     }
 
-    #else
+    #elif (PLATFORM == ZRF16) | (PLATFORM == RFSoC2x2)
     // use iox, read current iox gpio reg value, mask this with desired mux sel, write
     uint8_t iox_gpio[2] = {IOX_GPIO_REG, 0x0};
     res = i2c_write(I2C_DEV_IOX, &(iox_gpio[0]), 1);
@@ -364,6 +443,8 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
     if (res == RFCLK_FAILURE) {
       return res;
     }
+    #elif PLATFORM == RFSoC4x2
+    #else
     #endif
 
     // NOTE: when reading back LMX assumed that all LMX have been written as
@@ -376,6 +457,8 @@ int get_pll_config(uint8_t pll_type, uint32_t* regbuf) {
     res = get_lmx2594_config(I2C_DEV_LMX_SPI_BRIDGE, regbuf);
     #elif PLATFORM == RFSoC2x2
     res = get_lmx2594_config(I2C_DEV_PLL_SPI_BRIDGE, regbuf);
+    #elif PLATFORM == RFSoC4x2
+    res = get_lmx2594_config(dev, regbuf);
     #else
     printf("platform does not support lmx readback\n");
     #endif

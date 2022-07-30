@@ -1,0 +1,17 @@
+APP = rfsoc4x2-rfclks
+APPSOURCES= ../alpaca_rfclks.c ./alpaca_rfsoc4x2_rfclks.c
+OUTS = ./prg_rfpll
+SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./alpaca_rfsoc4x2_rfclks.c
+INCLUDES = -I../
+PLATFORM = -DPLATFORM=5
+LIBDIR =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

@@ -139,6 +139,25 @@
   #define LMK_REG_CNT 125
   #define LMK_PKT_SIZE 4
 
+#elif PLATFORM == RFSoC4x2
+  /* RFSoC4x2: lmk04828b, lmx2594 */
+
+  #define LMK_REG_CNT 136 // rfsoc4x2 (128 (0-127) works, but seems to be a
+                          // discrepencey as all tics outputs have 135 values (0-134))? Or have I just been
+                          // getting lucky, because it looks like loading the tcs for this from the XILINX
+                          // eval gives 135 outputs and programming from
+                          // those also seem to lock
+  #define LMK_PKT_SIZE 3  // number of bytes in spi write, {3 data bytes (24-bit) reg}
+
+                          // TODO in making spi driver for the rfsoc4x2 board
+                          // the PLL packet payload stays the same regardless if
+                          // the comm protocol is i2c or spi. But the actual
+                          // packet sent is a different size. For i2c, since the
+                          // PLLs are talking spi there is a slave select byte
+                          // preceeding the pll config packet payload. Change
+                          // the implementation to have a generic PKT_PAYLOAD
+                          // for the bus protocol instead of the pkt size for
+                          // the PLL
 #else
   // why does this error not throw?
   #error "PLATFORM NOT CONFIUGURED"
@@ -149,7 +168,11 @@
 
 #define LMX2594_REG_CNT 116      /* {apply rst, remove rst, prgm 113 registers, program R0 a second time} */
 #define LMX2594_RST_VAL 0x000002 /* write to R0, assert rst bit */
+#ifdef I2C_COM_BUS
 #define LMX_PKT_SIZE 4           /* number bytes per i2c write, {1 sdo select byte, 3 data bytes (24-bit) registers */
+#else
+#define LMX_PKT_SIZE 3
+#endif
 #define LMX_MUXOUT_REG_ADDR 0x0  /* LMX MUXOUT reg. address (R0) */
 #define LMX_MUXOUT_REG_VAL  0x0  /* LMX MUXOUT reg. value */
 #define LMX_MUXOUT_LD_SEL   0x4  /* idea here was that instead this would be the bit we toggle on and off to achive readback */
@@ -163,14 +186,21 @@
 #define RFCLK_SUCCESS 0
 #define RFCLK_FAILURE 1
 
-void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer, uint8_t len);
-uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type);
-int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len, uint8_t pkt_len);
+#ifdef I2C_COM_BUS
+#include "alpaca_i2c_utils.h"
+#else
+#include "alpaca_spi.h"
+#endif
 
-// TODO: may be worth while having a more generl readback structure
-// and it seems like it could be cool to have a struct for the pll that had a
-// pointer to the readback method, but that seems liek a lot of work to
-// implement now and so just hardcoding most readback methods
+uint32_t* readtcs(FILE* tcsfile, uint16_t len, uint8_t pll_type);
+
+#ifdef I2C_COM_BUS
+void format_rfclk_pkt(uint8_t sdoselect, uint32_t d, uint8_t* buffer, uint8_t len);
+int prog_pll(I2CDev dev, uint8_t spi_sdosel, uint32_t* buf, uint16_t len, uint8_t pkt_len);
+// TODO: may be worth while having a more general readback structure and it
+// seems like it could be cool to have a struct for the pll that had a pointer
+// to the readback method, but that seems liek a lot of work to implement now
+// and so just hardcoding most readback methods
 int get_pll_config(uint8_t pll_type, uint32_t* regbuf);
 int get_lmk04828_config(I2CDev dev, uint32_t* regbuf);
 int get_lmx2594_config(I2CDev dev, uint32_t* regbuf);
@@ -179,6 +209,20 @@ int get_lmx2594_config(I2CDev dev, uint32_t* regbuf);
 /* zcu216 or zcu208 for CLK104 */
 int set_sdo_mux(int mux_sel);
 int init_clk104_gpio(int gpio_id);
+#endif
+
+#else // SPI_COM_BUS
+
+void format_rfclk_pkt(uint32_t d, uint8_t* buffer, uint8_t len);
+int prog_pll(spi_dev_t *dev, uint32_t* buf, uint16_t len, uint8_t pkt_len);
+// TODO: may be worth while having a more general readback structure and it
+// seems like it could be cool to have a struct for the pll that had a pointer
+// to the readback method, but that seems liek a lot of work to implement now
+// and so just hardcoding most readback methods
+int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf);
+int get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf);
+int get_lmx2594_config(spi_dev_t *dev, uint32_t* regbuf);
+
 #endif
 
 #endif /* ALPACA_RFCLKS_H_ */
