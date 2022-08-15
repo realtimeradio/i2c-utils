@@ -101,6 +101,7 @@ typedef struct i2c_slave {
     X(I2C_DEV_PLL_SPI_BRIDGE, DEVICE_STRUCT("/dev/i2c-6", 0x71, (1 << 5), 0x2a, -1, &fd_i2c0)) /* SC18IS602 i2c to spi bridge for LMK04832/LMX2594 */ \
     X(I2C_DEV_USB,            DEVICE_STRUCT("/dev/i2c-7", 0x71, (1 << 6), 0x2d, -1, &fd_i2c0)) /* USB */ \
     // i2c slave byte addr for syzygy and usb may be wrong
+#elif PLATFORM == RFSoC4x2
 #else
   // why does this error not throw?
   #error "PLATFORM NOT CONFIGURED"

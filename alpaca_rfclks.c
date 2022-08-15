@@ -146,6 +146,7 @@ int prog_pll(spi_dev_t *dev, uint32_t* buf, uint16_t len, uint8_t pkt_len) {
   return res;
 }
 
+#ifdef SPI_COM_BUS
 int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
   printf("Reading LMK04828 register config\n");
 
@@ -200,6 +201,7 @@ int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
   return RFCLK_SUCCESS;
 
 }
+#endif
 
 /*
  * Readback lmk config info

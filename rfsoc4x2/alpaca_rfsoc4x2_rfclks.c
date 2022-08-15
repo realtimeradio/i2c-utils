@@ -102,10 +102,10 @@ int main(int argc, char**argv) {
 
   } else {
     // rfsoc4x2 has one adc rfpll and one dac rfpll
-
     strcpy(spidev.device, ADC_RFPLL_SPIDEV);
     init_spi_dev(&spidev);
     ret = prog_pll(&spidev, rp, prg_cnt, pkt_len);
+    close_spi_dev(&spidev);
 
     /* readback */
     printf("rfsoc4x2 does not support register readback, only led status\n");
@@ -122,7 +122,7 @@ int main(int argc, char**argv) {
   // release memory from tcs pll config
   free(rp);
 
-  // close i2c devices
+  // close spi device
   close_spi_dev(&spidev);
 
   return 0;

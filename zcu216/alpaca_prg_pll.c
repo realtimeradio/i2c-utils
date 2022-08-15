@@ -12,7 +12,6 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 
-#include "alpaca_i2c_utils.h"
 #include "alpaca_rfclks.h"
 
 void usage(char* name) {
