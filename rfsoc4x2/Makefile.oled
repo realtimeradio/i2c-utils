@@ -1,0 +1,16 @@
+APP = rfsoc4x2-oled
+APPSOURCES= ./oled.c
+OUTS = ./display_oled
+SRCS = ../alpaca_spi.c ./oled.c
+INCLUDES = -I../
+LIBDIR =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
