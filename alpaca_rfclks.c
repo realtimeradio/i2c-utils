@@ -425,6 +425,11 @@ int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf) {
 
   if (pll_type == 0) {
     /* readback lmk config info*/
+    // TODO `alpaca_rfclks.h` may have notes on what the readback capabilites for
+    // for each platform LMK. Otherwise, would need to put that information
+    // together. It may not be implemented for those that do support readback.
+    // But there may be a better way to check compatability (e.g., if
+    // LMK_MUX_SEL > 0).
 
     // set mux for sdo readback
     #if (PLATFORM == ZCU216) | (PLATFORM == ZCU208)
@@ -438,7 +443,7 @@ int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf) {
 
     res = get_lmk04828_config(I2C_DEV_CLK104, regbuf);
 
-    #elif (PLATFORM == ZRF16) | (PLATFORM == RFSoC2x2)
+    #elif (PLATFORM == ZRF16) | (PLATFORM == RFSoC2x2) | (PLATFORM == ZCU111)
     // use iox, read current iox gpio reg value, mask this with desired mux sel, write
     uint8_t iox_gpio[2] = {IOX_GPIO_REG, 0x0};
     res = i2c_write(I2C_DEV_IOX, &(iox_gpio[0]), 1);
