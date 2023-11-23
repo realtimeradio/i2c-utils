@@ -1,0 +1,17 @@
+APP = rfsoc4x2-lmk-ld-status
+APPSOURCES = ./lmk_ld_status.c
+OUTS = ./bin/lmk_ld_status
+SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./lmk_ld_status.c
+INCLUDES = -I../
+PLATFORM = -DPLATFORM=5
+LIBDIR =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o

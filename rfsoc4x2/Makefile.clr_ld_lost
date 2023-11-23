@@ -1,0 +1,17 @@
+APP = rfsoc4x2-lmk-clr-ld-lost
+APPSOURCES = ./lmk_clr_ld_lost.c
+OUTS = ./bin/lmk_clr_ld_lost
+SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./lmk_clr_ld_lost.c
+INCLUDES = -I../
+PLATFORM = -DPLATFORM=5
+LIBDIR =
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
