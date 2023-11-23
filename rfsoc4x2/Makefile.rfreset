@@ -1,6 +1,6 @@
 APP = reset_rfpll
 APPSOURCES= ../alpaca_rfclks.c ./reset_rfpll.c
-OUTS = ./reset_rfpll
+OUTS = ./bin/reset_rfpll
 SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./reset_rfpll.c
 INCLUDES = -I../
 PLATFORM = -DPLATFORM=5

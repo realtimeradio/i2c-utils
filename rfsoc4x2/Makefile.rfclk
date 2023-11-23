@@ -1,6 +1,6 @@
 APP = rfsoc4x2-rfclks
 APPSOURCES= ../alpaca_rfclks.c ./alpaca_rfsoc4x2_rfclks.c
-OUTS = ./prg_rfpll
+OUTS = ./bin/prg_rfpll
 SRCS = ../alpaca_spi.c ../alpaca_rfclks.c ./alpaca_rfsoc4x2_rfclks.c
 INCLUDES = -I../
 PLATFORM = -DPLATFORM=5

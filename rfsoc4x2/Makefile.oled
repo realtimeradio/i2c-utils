@@ -1,6 +1,6 @@
 APP = rfsoc4x2-oled
 APPSOURCES= ./oled.c
-OUTS = ./display_oled
+OUTS = ./bin/display_oled
 SRCS = ../alpaca_spi.c ./oled.c
 INCLUDES = -I../
 LIBDIR =

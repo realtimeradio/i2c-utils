@@ -1,6 +1,6 @@
 APP = rfsoc4x2-init-lmk-gpio
 APPSOURCES= ./init_rfclk_gpio.c
-OUTS = ./init_rfclk_gpio
+OUTS = ./bin/init_rfclk_gpio
 SRCS = ./init_rfclk_gpio.c
 INCLUDES = -I../
 LIBDIR =
