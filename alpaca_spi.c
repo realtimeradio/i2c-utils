@@ -89,8 +89,8 @@ int spi_transfer(spi_dev_t *spidev, uint8_t const *tx, uint8_t const *rx, uint8_
   struct spi_ioc_transfer xfer;
   memset(&xfer, 0, sizeof(xfer)); // Initialize data structures to 0
 
-  xfer.tx_buf = (unsigned long)&tx[0];
-  xfer.rx_buf = (unsigned long)&rx[0];
+  xfer.tx_buf = (unsigned long)tx;
+  xfer.rx_buf = (unsigned long)rx;
   xfer.speed_hz = spidev->speed;
   xfer.bits_per_word = spidev->bits;
   xfer.len = len; // each transfer is only 1 byte long

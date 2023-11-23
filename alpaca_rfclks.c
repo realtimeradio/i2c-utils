@@ -150,11 +150,13 @@ int prog_pll(spi_dev_t *dev, uint32_t* buf, uint16_t len, uint8_t pkt_len) {
 int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
   printf("Reading LMK04828 register config\n");
 
-  uint8_t R351[LMK_PKT_SIZE];
-  // hardcoded readback value computed from R531 to config spi readback
-  format_rfclk_pkt(0x00015f3b, R351, LMK_PKT_SIZE); // lmk04828 spi packets are 3 bytes
-  if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
-    printf("error setting R351 for readback on LMK04828\n");
+  uint8_t R366[LMK_PKT_SIZE];
+  // hardcoded readback value computed from R366 to config spi readback
+  // RFSoC4x2 STATUS_LD2 is connected to SDO rather than STATUS_LD1
+  // Need to then configure PLL2_LD_MUX for spi readback (register 0x16E, R366)
+  format_rfclk_pkt(0x00016e3b, R366, LMK_PKT_SIZE); // lmk04828 spi packets are 3 bytes
+  if(RFCLK_FAILURE==write_spi_pkt(dev, R366, LMK_PKT_SIZE)) {
+    printf("error setting R366 for readback on LMK04828\n");
     return RFCLK_FAILURE;
   }
 
@@ -180,10 +182,10 @@ int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
     *lmk_cd = (regbuf[i] & 0xffff00) + lmk_reg_read[2];
   }
 
-  // revert PLL1_LD_MUX/PLL1_LD_TYPE reg back (register 0x15F, R351)
-  format_rfclk_pkt(0x00015f3e, R351, LMK_PKT_SIZE);
-  if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
-    printf("error setting R351 for readback on LMK04828\n");
+  // revert PLL2_LD_MUX/PLL2_LD_TYPE reg back (register 0x16E, R366)
+  format_rfclk_pkt(0x00016e13, R366, LMK_PKT_SIZE);
+  if(RFCLK_FAILURE==write_spi_pkt(dev, R366, LMK_PKT_SIZE)) {
+    printf("error setting R366 for readback on LMK04828\n");
     return RFCLK_FAILURE;
   }
 
@@ -206,8 +208,13 @@ int spi_get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
 /*
  * Readback lmk config info
  *
+ * Note: combines the SPI transactions in this function from
+ * `spi_get_lmk04828_config` has not been tested. This would allow for all
+ * platforms to call the same method instead of RFSoC4x2 needing to be the only
+ * one to make a separate call to another function.
+ *
  * dev:
- *   i2c device struct used to communicate with the rfpll (e.g., spi bridge)
+ *   i2c (or spi) device struct used to communicate with the rfpll (e.g., spi bridge)
  * regbuf:
  *   buffer of current register configuration (typically just read and stored
  *   from a tcs file)
@@ -228,7 +235,11 @@ int get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
   format_rfclk_pkt(LMK_SDO_SS, 0x00015f3b, R351, LMK_PKT_SIZE); // lmk04828 i2c packets are 4 bytes {sdo, register value}
   if(RFCLK_FAILURE==i2c_write(dev, R351, LMK_PKT_SIZE)) {
 #else
-  format_rfclk_pkt(0x00015f3b, R351, LMK_PKT_SIZE); // lmk04828 spi packets are 3 bytes
+  // hardcoded readback value computed from R366 to config spi readback
+  // RFSoC4x2 STATUS_LD2 is connected to SDO rather than STATUS_LD1
+  // Need to then configure PLL2_LD_MUX for spi readback (register 0x16E, R366)
+  // note: variable is named R351, but really targeting R366
+  format_rfclk_pkt(0x00016e3b, R351, LMK_PKT_SIZE); // lmk04828 spi packets are 3 bytes
   if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
 #endif
     printf("error setting R351 for readback on LMK04828\n");
@@ -277,11 +288,14 @@ int get_lmk04828_config(spi_dev_t *dev, uint32_t* regbuf) {
     *lmk_cd = (regbuf[i] & 0xffff00) + lmk_reg_read[2];
   }
 
-  // revert PLL1_LD_MUX/PLL1_LD_TYPE reg back (register 0x15F, R351)
 #ifdef I2C_COM_BUS
+  // revert PLL1_LD_MUX/PLL1_LD_TYPE reg back (register 0x15F, R351)
   format_rfclk_pkt(LMK_SDO_SS, 0x00015f3e, R351, LMK_PKT_SIZE);
   if(RFCLK_FAILURE==i2c_write(dev, R351, LMK_PKT_SIZE)) {
 #else
+  // revert PLL2_LD_MUX/PLL2_LD_TYPE reg back (register 0x16E, R366)
+  // note: being PLL2_LD_MUX has to do with RFSoC4x2 board layout, not that it using SPI
+  // note: variable is named R351, but really targeting R366
   format_rfclk_pkt(0x00015f3e, R351, LMK_PKT_SIZE);
   if(RFCLK_FAILURE==write_spi_pkt(dev, R351, LMK_PKT_SIZE)) {
 #endif
@@ -467,7 +481,7 @@ int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf) {
     printf("WARN: readback for lmk not implemented\n");
 
     #elif PLATFORM == RFSoC4x2
-      printf("rfsoc4x2 does not support LMK register readback, only LED status\n");
+    res = spi_get_lmk04828_config(dev, regbuf);
     #else
       #error "PLATFORM NOT CONFIGURED"
     #endif
@@ -520,7 +534,7 @@ int get_pll_config(spi_dev_t *dev, uint8_t pll_type, uint32_t* regbuf) {
     #elif PLATFORM == RFSoC2x2
     res = get_lmx2594_config(I2C_DEV_PLL_SPI_BRIDGE, regbuf);
     #elif PLATFORM == RFSoC4x2
-    printf("rfsoc4x2 does not support LMX register readback, only LED status\n");
+    printf("LMX register readback not yet implemented for rfsoc4x2, only LED status is shown\n");
     #else
     printf("platform does not support lmx readback\n");
     #endif
