@@ -34,22 +34,67 @@ static const SfpStatus sfp_st[] = {
   { (1 << 0), "Data Ready" }
 };
 
+// read A2 status
+uint16_t get_sfp_status(I2CDev dev) {
+  // Read status byte
+  // Set pointer to SFF status register (see SFF-8742 spec for bit definitions)
+  uint8_t ret = FAILURE;
+  uint8_t sff_status_addr = SFF_STATUS;
+  uint8_t sfp_status;
+
+  ret = i2c_write(I2C_DEV_SFP0_MOD, &sff_status_addr, sizeof(sff_status_addr));
+  if (ret==FAILURE) {
+    printf("failed to write sfp status\n");
+    return 256; // greater than 255, uint8_t, to indicate error
+  }
+
+  // Read status byte
+  ret = i2c_read(I2C_DEV_SFP0_MOD, &sfp_status, sizeof(sfp_status));
+  if (ret==FAILURE) {
+    printf("failed to read sfp status\n");
+    return 256;
+  }
+
+  // Decode SFF Status
+  if (sfp_status) {
+    // Decode status bits
+    for (int i=0; i<8; i++) {
+      if (sfp_st[i].st_bit & sfp_status) {
+        printf("%s\n", sfp_st[i].st_msg);
+      }
+    }
+  } else {
+    // No bits set, all clear (sfp_status == 0)
+    printf("Normal\n");
+  }
+  return sfp_status;
+}
+
 int main() {
-  printf("ZCU216 test probe zsfp+ cages\n");
+  uint8_t i2c_ret;
+  I2CDev sfp_tcvr[4] = {I2C_DEV_SFP0, I2C_DEV_SFP1, I2C_DEV_SFP2, I2C_DEV_SFP3};
+  I2CDev sfp_mods[4] = {I2C_DEV_SFP0_MOD, I2C_DEV_SFP1_MOD, I2C_DEV_SFP2_MOD, I2C_DEV_SFP3_MOD};
 
+  printf("****** ZCU216 probe zsfp+ cages ******\n");
+  printf("opening i2c bus...\n");
   init_i2c_bus();
-
-  init_i2c_dev(I2C_DEV_SFP0);
-  init_i2c_dev(I2C_DEV_SFP0_MOD);
+  for (uint8_t i=0; i<4; i++) {
+    init_i2c_dev(sfp_tcvr[i]);
+    init_i2c_dev(sfp_mods[i]);
+  }
 
   uint8_t addr = 0;
-  int8_t sfp0_found = 0;
-  if (SUCCESS==i2c_write(I2C_DEV_SFP0, &addr, 1)) {
-    printf("SFP0 found...\n");
-    sfp0_found = 1;
-  } else {
-    printf("SFP0 not found...\n");
+  uint8_t sfp_found = 0;
+  printf("checking for transceivers...\n");
+  for (uint8_t i=0; i<4; i++) {
+    if (SUCCESS==i2c_write(sfp_tcvr[i], &addr, 1)) {
+      printf("SFP%u found...\n", i);
+      sfp_found = sfp_found | (1 << i);
+    } else {
+      printf("SFP%u not found...\n", i);
+    }
   }
+  printf("sfp_found = %u\n", sfp_found);
 
   /* */
   uint8_t buf[256]; 
@@ -57,19 +102,33 @@ int main() {
   uint8_t partno[17];
   const size_t vendor_len = 16;
 
-  // read sfp A0 id block
-  if (sfp0_found) {
-    i2c_read(I2C_DEV_SFP0, buf, sizeof(buf));
-    memcpy(vendor, &buf[SFF_VENDOR], vendor_len);
-    printf("****SFP0*****\nType: %x\nVendor: %s\n", buf[0], vendor);
+  // read sfp SFF-8742 A0 id block for cages 0-3
+  printf("reading module vendor info...\n");
+  for (uint8_t i=0; i<4; i++) {
+    if (sfp_found && (1<<i)) {
+      i2c_read(sfp_tcvr[i], buf, sizeof(buf));
+      memcpy(vendor, &buf[SFF_VENDOR], vendor_len);
+      printf("****SFP%u*****\nType: %x\nVendor: %s\n", i, buf[0], vendor);
+    }
   }
 
-  // read sfp0 A2 status
+  // read sfp SFF-8742 A2 status for cages 0-3
+  printf("reading module status...\n");
+  uint8_t sfp_status;
+  for (uint8_t i=0; i<4; i++) {
+    if (sfp_found && (1<<i)) {
+      sfp_status = get_sfp_status(sfp_mods[i]);
+    } else {
+      printf("SFP%u was not found, cannot read status\n", i);
+    }
+  }
 
   /* */
-  close_i2c_dev(I2C_DEV_SFP0);
-  close_i2c_dev(I2C_DEV_SFP0_MOD);
-
+  printf("closing i2c bus...\n");
+  for (uint8_t i=0; i<4; i++) {
+    close_i2c_dev(sfp_tcvr[i]);
+    close_i2c_dev(sfp_mods[i]);
+  }
   close_i2c_bus();
 
   return 0;

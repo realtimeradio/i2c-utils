@@ -1,6 +1,6 @@
 APP = prg_clk104
 APPSOURCES= alpaca_i2c_utils.c alpaca_rfclks.c alpaca_prg_pll.c
-OUTS = /srv/tftpboot/nfs/alpaca/conf/home/casper/bin/prg_clk104_rfpll
+OUTS = ./prg_clk104_rfpll
 SRCS = ../alpaca_i2c_utils.c ../alpaca_rfclks.c alpaca_prg_pll.c
 INCLUDES = -I../
 LIBDIR =

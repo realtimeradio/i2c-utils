@@ -7,8 +7,6 @@
 #include "phytest_idt8a34001_regs.h"
 
 int main() {
-  printf("I am an alpaca i2c teapot\n");
-
   // initialize i2c buses
   init_i2c_bus();
 
