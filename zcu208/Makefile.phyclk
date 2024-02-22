@@ -1,0 +1,17 @@
+APP = i2c-utils
+APPSOURCES= alpaca_i2c_utils.c 100g_phy_test.c
+OUTS =  ./bin/prg_8a34001
+SRCS = ../alpaca_i2c_utils.c phytest_idt8a34001_regs.c 100g_phy_test.c
+INCLUDES = -I../
+LIBDIR =
+PLATFORM = -DPLATFORM=2
+OBJS =
+
+%.o: %.c
+	$(CC) ${LDFLAGS} ${BOARD_FLAG} $(INCLUDES) ${CFLAGS} -c $(APPSOURCES)
+
+all: $(OBJS)
+	$(CC) ${LDFLAGS} $(INCLUDES) $(LIBDIR) $(OBJS) $(PLATFORM) $(SRCS) -o $(OUTS)
+
+clean:
+	rm -rf $(OUTS) *.o
