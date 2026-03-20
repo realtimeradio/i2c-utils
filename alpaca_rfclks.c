@@ -51,6 +51,13 @@ void format_rfclk_pkt(uint32_t d, uint8_t* buffer, uint8_t len) {
   return;
 }
 
+
+#if PLATFORM == ZCU216
+  char CLK104_GPIO_MUX_SEL0[4];
+  char CLK104_GPIO_MUX_SEL1[4];
+#endif
+
+
 /*
  * Parse a TICS Pro clock txt formatted file
  */

@@ -41,8 +41,6 @@
   #define LMX_MUX_SEL_224_225 0    /* ADC LMX2594 PLL */
   #define LMX_MUX_SEL_226_227 -1   /* no LMX2594 PLL connected  to these tiles */
   #define LMX_MUX_SEL_228_229 1    /* DAC LMX2594 PLL */
-  char CLK104_GPIO_MUX_SEL0[4];
-  char CLK104_GPIO_MUX_SEL1[4];
 
   #define LMK_REG_CNT 136 // zcu216/208 (128 (0-127) works, but seems to be a
                           // discrepencey as all tics outputs have 135 values (0-134))? Or have I just been
