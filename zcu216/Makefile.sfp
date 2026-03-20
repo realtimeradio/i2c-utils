@@ -1,6 +1,6 @@
 APP = zcu216-probe-sfp
 APPSOURCES= alpaca_i2c_utils.c zcu216_probe_sfp.c
-OUTS = /srv/tftpboot/nfs/alpaca/conf/home/casper/bin/zcu216_probe_sfp
+OUTS = ./bin/zcu216_probe_sfp
 SRCS = ../alpaca_i2c_utils.c zcu216_probe_sfp.c
 INCLUDES = -I../
 LIBDIR =
